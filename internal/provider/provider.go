@@ -14,11 +14,10 @@ func Provider() *schema.Provider {
 	provider := &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"password": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				DefaultFunc:  schema.EnvDefaultFunc("PIHOLE_PASSWORD", nil),
-				Description:  "The admin password used to login to the admin dashboard.",
-				ExactlyOneOf: []string{"password"},
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("PIHOLE_PASSWORD", nil),
+				Description: "The admin password used to login to the admin dashboard.",
 			},
 			"url": {
 				Type:        schema.TypeString,
