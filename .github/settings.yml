@@ -30,6 +30,7 @@ branches:
         contexts:
           - lint
           - pr-lint
+          - test
       enforce_admins: false    
       required_linear_history: true
       restrictions: null
