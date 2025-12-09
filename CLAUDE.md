@@ -17,7 +17,7 @@ make testall
 # Run a single test
 go test ./internal/provider -run TestAccLocalDNS -v
 
-# Lint
+# Lint (requires golangci-lint)
 make lint
 
 # Generate documentation
@@ -37,6 +37,30 @@ make testall       # Run tests against it
 ```
 
 To test a specific Pi-hole image: `TAG=nightly make docker-run`
+
+## Local Provider Installation
+
+To test the provider manually with Terraform:
+
+```sh
+go build .
+mkdir -p ~/.terraform.d/plugins/terraform.local/local/pihole/0.0.1/darwin_arm64/
+cp terraform-provider-pihole ~/.terraform.d/plugins/terraform.local/local/pihole/0.0.1/darwin_arm64/terraform-provider-pihole_v0.0.1
+```
+
+Then reference it in Terraform config:
+```hcl
+terraform {
+  required_providers {
+    pihole = {
+      source  = "terraform.local/local/pihole"
+      version = "0.0.1"
+    }
+  }
+}
+```
+
+Adjust `darwin_arm64` for your platform (see `.goreleaser.yml` for options).
 
 ## Architecture
 
