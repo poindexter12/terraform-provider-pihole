@@ -45,6 +45,7 @@ func Provider() *schema.Provider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
+			"pihole_client":       resourceClient(),
 			"pihole_cname_record": resourceCNAMERecord(),
 			"pihole_dns_record":   resourceDNSRecord(),
 		},

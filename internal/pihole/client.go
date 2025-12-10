@@ -11,6 +11,9 @@ type Client interface {
 	// LocalCNAME returns the service for managing CNAME records
 	LocalCNAME() LocalCNAMEService
 
+	// ClientManagement returns the service for managing Pi-hole clients
+	ClientManagement() ClientManagementService
+
 	// SessionID returns the current session ID (for reuse across provider instances)
 	SessionID() string
 
@@ -41,4 +44,14 @@ type LocalCNAMEService interface {
 	Get(ctx context.Context, domain string) (*CNAMERecord, error)
 	List(ctx context.Context) ([]CNAMERecord, error)
 	Delete(ctx context.Context, domain string) error
+}
+
+// ClientManagementService manages Pi-hole client configurations.
+// Clients can be IP addresses, MAC addresses, hostnames, CIDR ranges, or interface names.
+type ClientManagementService interface {
+	Create(ctx context.Context, client, comment string) (*ClientRecord, error)
+	Get(ctx context.Context, client string) (*ClientRecord, error)
+	List(ctx context.Context) ([]ClientRecord, error)
+	Update(ctx context.Context, client, comment string) (*ClientRecord, error)
+	Delete(ctx context.Context, client string) error
 }
