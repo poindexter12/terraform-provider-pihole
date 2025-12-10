@@ -30,8 +30,9 @@ type Client struct {
 	sessionID   string
 	sessionLock sync.RWMutex
 
-	dns   *dnsService
-	cname *cnameService
+	dns        *dnsService
+	cname      *cnameService
+	clientMgmt *clientService
 }
 
 // NewClient creates a new Pi-hole v6 API client
@@ -82,6 +83,7 @@ func NewClient(ctx context.Context, cfg pihole.Config) (*Client, error) {
 
 	c.dns = &dnsService{client: c}
 	c.cname = &cnameService{client: c}
+	c.clientMgmt = &clientService{client: c}
 
 	// If no session ID provided, authenticate now
 	if c.sessionID == "" {
@@ -101,6 +103,11 @@ func (c *Client) LocalDNS() pihole.LocalDNSService {
 // LocalCNAME returns the CNAME record service
 func (c *Client) LocalCNAME() pihole.LocalCNAMEService {
 	return c.cname
+}
+
+// ClientManagement returns the client management service
+func (c *Client) ClientManagement() pihole.ClientManagementService {
+	return c.clientMgmt
 }
 
 // SessionID returns the current session ID
@@ -191,6 +198,11 @@ func (c *Client) request(ctx context.Context, method, path string, body interfac
 // get performs an authenticated GET request
 func (c *Client) get(ctx context.Context, path string) (*http.Response, error) {
 	return c.request(ctx, http.MethodGet, path, nil)
+}
+
+// post performs an authenticated POST request
+func (c *Client) post(ctx context.Context, path string, body interface{}) (*http.Response, error) {
+	return c.request(ctx, http.MethodPost, path, body)
 }
 
 // put performs an authenticated PUT request

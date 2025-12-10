@@ -12,6 +12,17 @@ type CNAMERecord struct {
 	Target string
 }
 
+// ClientRecord represents a Pi-hole client configuration
+type ClientRecord struct {
+	Client       string
+	Name         string
+	Comment      string
+	Groups       []int
+	ID           int
+	DateAdded    int64
+	DateModified int64
+}
+
 // Config contains the configuration for creating a Pi-hole client
 type Config struct {
 	// BaseURL is the Pi-hole server URL (e.g., "http://pi.hole")

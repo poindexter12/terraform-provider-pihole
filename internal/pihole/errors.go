@@ -14,4 +14,7 @@ var (
 
 	// ErrSessionNotFound is returned when session ID is not in auth response
 	ErrSessionNotFound = errors.New("session ID not found in response")
+
+	// ErrClientNotFound is returned when a client record is not found
+	ErrClientNotFound = errors.New("client not found")
 )
