@@ -7,7 +7,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	pihole "github.com/ryanwholey/go-pihole"
 )
 
 // dataSourceCNAMERecords returns a schema resource for listing Pi-hole CNAME records
@@ -40,9 +39,9 @@ func dataSourceCNAMERecords() *schema.Resource {
 
 // dataSourceCNAMERecordsRead lists all Pi-hole CNAME records
 func dataSourceCNAMERecordsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) (diags diag.Diagnostics) {
-	client, ok := meta.(*pihole.Client)
-	if !ok {
-		return diag.Errorf("Could not load client in data source request")
+	client, diags := getClient(meta)
+	if diags != nil {
+		return diags
 	}
 
 	cnameList, err := client.LocalCNAME.List(ctx)
