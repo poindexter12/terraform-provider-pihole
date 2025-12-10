@@ -39,12 +39,16 @@ func dataSourceDNSRecords() *schema.Resource {
 
 // dataSourceDNSRecordsRead lists all Pi-hole local DNS records
 func dataSourceDNSRecordsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) (diags diag.Diagnostics) {
-	client, diags := getClient(meta)
+	pm, diags := getProviderMeta(meta)
 	if diags != nil {
 		return diags
 	}
 
-	dnsList, err := client.LocalDNS().List(ctx)
+	// Acquire global mutex to serialize all Pi-hole API operations
+	pm.Lock()
+	defer pm.Unlock()
+
+	dnsList, err := pm.Client.LocalDNS().List(ctx)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -3,19 +3,11 @@ package provider
 import (
 	"context"
 	"errors"
-	"sync"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/poindexter12/terraform-provider-pihole/internal/pihole"
 )
-
-// cnameMutex serializes CNAME create/delete operations to work around a race
-// condition in the Pi-hole API. When multiple CNAME records are modified
-// concurrently, some operations silently fail, leaving orphaned or missing records.
-// This mutex ensures CNAME mutations happen sequentially.
-// See: https://github.com/ryanwholey/terraform-provider-pihole/issues/68
-var cnameMutex sync.Mutex
 
 // resourceCNAMERecord returns the CNAME Terraform resource management configuration
 func resourceCNAMERecord() *schema.Resource {
@@ -55,7 +47,7 @@ func resourceCNAMERecord() *schema.Resource {
 
 // resourceCNAMERecordCreate handles the creation a CNAME record via Terraform
 func resourceCNAMERecordCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) (diags diag.Diagnostics) {
-	client, diags := getClient(meta)
+	pm, diags := getProviderMeta(meta)
 	if diags != nil {
 		return diags
 	}
@@ -64,11 +56,12 @@ func resourceCNAMERecordCreate(ctx context.Context, d *schema.ResourceData, meta
 	target := d.Get("target").(string)
 	force := d.Get("force").(bool)
 
-	cnameMutex.Lock()
-	defer cnameMutex.Unlock()
+	// Acquire global mutex to serialize all Pi-hole API operations
+	pm.Lock()
+	defer pm.Unlock()
 
 	opts := &pihole.CreateOptions{Force: force}
-	_, err := client.LocalCNAME().Create(ctx, domain, target, opts)
+	_, err := pm.Client.LocalCNAME().Create(ctx, domain, target, opts)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -80,12 +73,16 @@ func resourceCNAMERecordCreate(ctx context.Context, d *schema.ResourceData, meta
 
 // resourceCNAMERecordRead retrieves the CNAME record of the associated domain ID
 func resourceCNAMERecordRead(ctx context.Context, d *schema.ResourceData, meta interface{}) (diags diag.Diagnostics) {
-	client, diags := getClient(meta)
+	pm, diags := getProviderMeta(meta)
 	if diags != nil {
 		return diags
 	}
 
-	record, err := client.LocalCNAME().Get(ctx, d.Id())
+	// Read operations also acquire the mutex to prevent reads during writes
+	pm.Lock()
+	defer pm.Unlock()
+
+	record, err := pm.Client.LocalCNAME().Get(ctx, d.Id())
 	if err != nil {
 		if errors.Is(err, pihole.ErrCNAMENotFound) {
 			d.SetId("")
@@ -108,15 +105,16 @@ func resourceCNAMERecordRead(ctx context.Context, d *schema.ResourceData, meta i
 
 // resourceCNAMERecordDelete handles the deletion of a CNAME record via Terraform
 func resourceCNAMERecordDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) (diags diag.Diagnostics) {
-	client, diags := getClient(meta)
+	pm, diags := getProviderMeta(meta)
 	if diags != nil {
 		return diags
 	}
 
-	cnameMutex.Lock()
-	defer cnameMutex.Unlock()
+	// Acquire global mutex to serialize all Pi-hole API operations
+	pm.Lock()
+	defer pm.Unlock()
 
-	if err := client.LocalCNAME().Delete(ctx, d.Id()); err != nil {
+	if err := pm.Client.LocalCNAME().Delete(ctx, d.Id()); err != nil {
 		return diag.FromErr(err)
 	}
 

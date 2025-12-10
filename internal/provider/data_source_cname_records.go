@@ -39,12 +39,16 @@ func dataSourceCNAMERecords() *schema.Resource {
 
 // dataSourceCNAMERecordsRead lists all Pi-hole CNAME records
 func dataSourceCNAMERecordsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) (diags diag.Diagnostics) {
-	client, diags := getClient(meta)
+	pm, diags := getProviderMeta(meta)
 	if diags != nil {
 		return diags
 	}
 
-	cnameList, err := client.LocalCNAME().List(ctx)
+	// Acquire global mutex to serialize all Pi-hole API operations
+	pm.Lock()
+	defer pm.Unlock()
+
+	cnameList, err := pm.Client.LocalCNAME().List(ctx)
 	if err != nil {
 		return diag.FromErr(err)
 	}
