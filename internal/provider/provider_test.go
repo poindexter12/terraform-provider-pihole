@@ -25,12 +25,12 @@ func testAccPreCheck(t *testing.T) {
 		client, err := Config{
 			URL:      url,
 			Password: password,
-		}.Client(context.TODO())
+		}.Client(context.Background())
 
 		if err != nil {
 			t.Fatal(err.Error())
 		}
-		session, err := client.SessionAPI.Post(context.TODO())
+		session, err := client.SessionAPI.Post(context.Background())
 		if err != nil {
 			t.Fatal(err.Error())
 		}

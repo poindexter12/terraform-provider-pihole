@@ -2,6 +2,7 @@
 local-test/
 terraform/
 .env
+.claude/settings.local.json
 terraform-provider-pihole
 
 *.dll

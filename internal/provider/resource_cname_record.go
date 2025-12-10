@@ -41,9 +41,9 @@ func resourceCNAMERecord() *schema.Resource {
 
 // resourceCNAMERecordCreate handles the creation a CNAME record via Terraform
 func resourceCNAMERecordCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) (diags diag.Diagnostics) {
-	client, ok := meta.(*pihole.Client)
-	if !ok {
-		return diag.Errorf("Could not load client in resource request")
+	client, diags := getClient(meta)
+	if diags != nil {
+		return diags
 	}
 
 	domain := d.Get("domain").(string)
@@ -61,9 +61,9 @@ func resourceCNAMERecordCreate(ctx context.Context, d *schema.ResourceData, meta
 
 // resourceCNAMERecordRead retrieves the CNAME record of the associated domain ID
 func resourceCNAMERecordRead(ctx context.Context, d *schema.ResourceData, meta interface{}) (diags diag.Diagnostics) {
-	client, ok := meta.(*pihole.Client)
-	if !ok {
-		return diag.Errorf("Could not load client in resource request")
+	client, diags := getClient(meta)
+	if diags != nil {
+		return diags
 	}
 
 	record, err := client.LocalCNAME.Get(ctx, d.Id())
@@ -89,9 +89,9 @@ func resourceCNAMERecordRead(ctx context.Context, d *schema.ResourceData, meta i
 
 // resourceCNAMERecordDelete handles the deletion of a CNAME record via Terraform
 func resourceCNAMERecordDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) (diags diag.Diagnostics) {
-	client, ok := meta.(*pihole.Client)
-	if !ok {
-		return diag.Errorf("Could not load client in resource request")
+	client, diags := getClient(meta)
+	if diags != nil {
+		return diags
 	}
 
 	resourceDeleteMutex.Lock()

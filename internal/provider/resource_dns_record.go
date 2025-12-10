@@ -38,9 +38,9 @@ func resourceDNSRecord() *schema.Resource {
 
 // resourceDNSRecordCreate handles the creation a local DNS record via Terraform
 func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) (diags diag.Diagnostics) {
-	client, ok := meta.(*pihole.Client)
-	if !ok {
-		return diag.Errorf("Could not load client in resource request")
+	client, diags := getClient(meta)
+	if diags != nil {
+		return diags
 	}
 
 	domain := d.Get("domain").(string)
@@ -58,9 +58,9 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, meta i
 
 // resourceDNSRecordRead finds a local DNS record based on the associated domain ID
 func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, meta interface{}) (diags diag.Diagnostics) {
-	client, ok := meta.(*pihole.Client)
-	if !ok {
-		return diag.Errorf("Could not load client in resource request")
+	client, diags := getClient(meta)
+	if diags != nil {
+		return diags
 	}
 
 	record, err := client.LocalDNS.Get(ctx, d.Id())
@@ -86,9 +86,9 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, meta int
 
 // resourceDNSRecordDelete handles the deletion of a local DNS record via Terraform
 func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) (diags diag.Diagnostics) {
-	client, ok := meta.(*pihole.Client)
-	if !ok {
-		return diag.Errorf("Could not load client in resource request")
+	client, diags := getClient(meta)
+	if diags != nil {
+		return diags
 	}
 
 	if err := client.LocalDNS.Delete(ctx, d.Id()); err != nil {

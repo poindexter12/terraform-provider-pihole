@@ -1,6 +1,9 @@
 # terraform-provider-pihole
 
-![test workflow status](https://github.com/ryanwholey/terraform-provider-pihole/actions/workflows/test.yml/badge.svg?branch=main) [![terraform registry](https://img.shields.io/badge/terraform-registry-623CE4)](https://registry.terraform.io/providers/ryanwholey/pihole/latest/docs)
+![test workflow status](https://github.com/poindexter12/terraform-provider-pihole/actions/workflows/test.yml/badge.svg?branch=main)
+
+> **Note:** This is a fork of [ryanwholey/terraform-provider-pihole](https://github.com/ryanwholey/terraform-provider-pihole).
+> Credit to [@ryanwholey](https://github.com/ryanwholey) for the original implementation.
 
 [Pi-hole](https://pi-hole.net/) is an ad blocking application which acts as a DNS proxy that returns empty responses when DNS requests for known advertisement domains are made from your devices. It has a number of additional capabilities like optional DHCP server capabilities, specific allow/deny profiles for specific clients, and a neat UI with a ton of information regarding your internet traffic.
 
@@ -8,20 +11,11 @@ Pi-hole is an open source project and can be found at https://github.com/pi-hole
 
 ## Usage
 
-This provider is published to the Terraform Provider registry.
+This fork is not published to the Terraform Provider registry. To use it, build from source and install locally (see [Provider Development](#provider-development) below).
 
-```tf
-terraform {
-  required_providers {
-    pihole = {
-      source  = "ryanwholey/pihole"
-      version = "x.x.x"
-    }
-  }
-}
-```
+For the upstream version published to the registry, see [ryanwholey/pihole](https://registry.terraform.io/providers/ryanwholey/pihole/latest/docs).
 
-Configure the provider with credentials, or pass environment variables.
+Configure the provider with credentials, or pass environment variables:
 
 ```tf
 provider "pihole" {
@@ -29,8 +23,6 @@ provider "pihole" {
   password  = var.pihole_password         # PIHOLE_PASSWORD
 }
 ```
-
-See the [provider documentation](https://registry.terraform.io/providers/ryanwholey/pihole/latest/docs) for more details.
 
 ## Provider Development
 
@@ -40,7 +32,7 @@ One way to run a local provider is to build the project, move it to the Terrafor
 
 > [!NOTE]
 > Note the `/darwin_arm64/` path portion targets a Mac with an ARM64 processor,
-> see https://github.com/ryanwholey/terraform-provider-pihole/blob/main/.goreleaser.yml#L18-L27
+> see https://github.com/poindexter12/terraform-provider-pihole/blob/main/.goreleaser.yml#L18-L27
 > for possible supported combinations.
 
 ```sh
@@ -70,7 +62,7 @@ terraform {
 Testing a Terraform provider comes in several forms. This chapter will attempt to explain the differences, where to find documentation, and how to contribute.
 
 > [!NOTE]
-> For the current tests in this repository the SDKv2 is used. In issue [#4](https://github.com/ryanwholey/terraform-provider-pihole/issues/38) an upgrade from SDKv2 to [plugin-testing](https://developer.hashicorp.com/terraform/plugin/framework) can be tracked.
+> For the current tests in this repository the SDKv2 is used.
 
 #### Unit testing
 ```sh

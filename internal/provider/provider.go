@@ -7,18 +7,17 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/ryanwholey/terraform-provider-pihole/internal/version"
+	"github.com/poindexter12/terraform-provider-pihole/internal/version"
 )
 
 func Provider() *schema.Provider {
 	provider := &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"password": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				DefaultFunc:  schema.EnvDefaultFunc("PIHOLE_PASSWORD", nil),
-				Description:  "The admin password used to login to the admin dashboard.",
-				ExactlyOneOf: []string{"password"},
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("PIHOLE_PASSWORD", nil),
+				Description: "The admin password used to login to the admin dashboard.",
 			},
 			"url": {
 				Type:        schema.TypeString,

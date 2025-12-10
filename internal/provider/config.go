@@ -40,7 +40,9 @@ func (c Config) Client(ctx context.Context) (*pihole.Client, error) {
 		}
 
 		rootCAs := x509.NewCertPool()
-		rootCAs.AppendCertsFromPEM(ca)
+		if !rootCAs.AppendCertsFromPEM(ca) {
+			return nil, fmt.Errorf("failed to parse CA certificates from %q", c.CAFile)
+		}
 
 		transport := &http.Transport{}
 		transport.TLSClientConfig = &tls.Config{

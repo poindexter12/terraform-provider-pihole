@@ -2,7 +2,7 @@ repository:
   name: terraform-provider-pihole
   description: A Terraform provider for managing Pi-hole resources
   topics: pi-hole, terraform, provider, terraform-provider
-  homepage: https://registry.terraform.io/providers/ryanwholey/pihole/latest/docs
+  homepage: https://github.com/poindexter12/terraform-provider-pihole
 
   private: false
 
@@ -30,6 +30,7 @@ branches:
         contexts:
           - lint
           - pr-lint
+          - test
       enforce_admins: false    
       required_linear_history: true
       restrictions: null

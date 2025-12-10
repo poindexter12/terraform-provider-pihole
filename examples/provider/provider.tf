@@ -1,7 +1,8 @@
 terraform {
   required_providers {
     pihole = {
-      source = "ryanwholey/pihole"
+      source  = "terraform.local/local/pihole"
+      version = "0.0.1"
     }
   }
 }

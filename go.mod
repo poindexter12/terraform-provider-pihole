@@ -1,4 +1,4 @@
-module github.com/ryanwholey/terraform-provider-pihole
+module github.com/poindexter12/terraform-provider-pihole
 
 go 1.22
 

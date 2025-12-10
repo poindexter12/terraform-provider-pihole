@@ -34,7 +34,7 @@ func TestAccCNAMERecord(t *testing.T) {
 					testCheckLocalCNAMEResourceExists(t, "foo.com", "woz.com"),
 				),
 			},
-			// TOOD: Uncomment after addressing client performance issues regarding one off requests. Consider a bulk update implementation.
+			// TODO: Uncomment after addressing client performance issues regarding one off requests. Consider a bulk update implementation.
 			// {
 			// 	Config: testLocalCNAMEResourceWithDataConfig(),
 			// 	Check: resource.ComposeTestCheckFunc(
