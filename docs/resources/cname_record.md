@@ -27,6 +27,10 @@ resource "pihole_cname_record" "record" {
 - `domain` (String) Domain to create a CNAME record for
 - `target` (String) Value of the CNAME record where traffic will be directed to from the configured domain value
 
+### Optional
+
+- `force` (Boolean) Attempt to force record creation. Note: Pi-hole v6 API currently does not implement this for CNAME endpoints, but it is included for forward compatibility with future Pi-hole versions.
+
 ### Read-Only
 
 - `id` (String) The ID of this resource.

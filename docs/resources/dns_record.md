@@ -27,6 +27,10 @@ resource "pihole_dns_record" "record" {
 - `domain` (String) DNS record domain
 - `ip` (String) IP address to route traffic to from the DNS record domain
 
+### Optional
+
+- `force` (Boolean) Attempt to force record creation. Note: Pi-hole v6 API currently does not implement this for DNS endpoints, but it is included for forward compatibility with future Pi-hole versions.
+
 ### Read-Only
 
 - `id` (String) The ID of this resource.
