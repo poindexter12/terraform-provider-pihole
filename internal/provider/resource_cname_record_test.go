@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	pihole "github.com/ryanwholey/go-pihole"
+	"github.com/poindexter12/terraform-provider-pihole/internal/pihole"
 )
 
 // TestAccCNAMERecord acceptance test for the CNAME record resource
@@ -54,7 +54,7 @@ func testLocalCNAMEResourceConfig(name string, domain string, target string) str
 		resource "pihole_cname_record" %q {
 			domain = %q
 			target = %q
-		}	
+		}
 	`, name, domain, target)
 }
 
@@ -100,9 +100,9 @@ func testLocalCNAMEResourceConfig(name string, domain string, target string) str
 // testCheckLocalCNAMEResourceExists checks that the CNAME record exists in Pi-hole
 func testCheckLocalCNAMEResourceExists(_ *testing.T, domain string, target string) resource.TestCheckFunc {
 	return func(*terraform.State) error {
-		client := testAccProvider.Meta().(*pihole.Client)
+		client := testAccProvider.Meta().(pihole.Client)
 
-		record, err := client.LocalCNAME.Get(context.Background(), domain)
+		record, err := client.LocalCNAME().Get(context.Background(), domain)
 		if err != nil {
 			return err
 		}
@@ -117,15 +117,15 @@ func testCheckLocalCNAMEResourceExists(_ *testing.T, domain string, target strin
 
 // testAccCheckCNAMERecordDestroy checks that all resources have been deleted
 func testAccCheckCNAMERecordDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*pihole.Client)
+	client := testAccProvider.Meta().(pihole.Client)
 
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pihole_cname_record" {
 			continue
 		}
 
-		if _, err := client.LocalCNAME.Get(context.Background(), r.Primary.ID); err != nil {
-			if !errors.Is(err, pihole.ErrorLocalCNAMENotFound) {
+		if _, err := client.LocalCNAME().Get(context.Background(), r.Primary.ID); err != nil {
+			if !errors.Is(err, pihole.ErrCNAMENotFound) {
 				return err
 			}
 		}

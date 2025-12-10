@@ -30,11 +30,12 @@ func testAccPreCheck(t *testing.T) {
 		if err != nil {
 			t.Fatal(err.Error())
 		}
-		session, err := client.SessionAPI.Post(context.Background())
-		if err != nil {
-			t.Fatal(err.Error())
+		// Get session ID from the authenticated client
+		sessionID := client.SessionID()
+		if sessionID == "" {
+			t.Fatal("failed to get session ID from client")
 		}
-		if err := os.Setenv("__PIHOLE_SESSION_ID", session.SID); err != nil {
+		if err := os.Setenv("__PIHOLE_SESSION_ID", sessionID); err != nil {
 			t.Fatal(err.Error())
 		}
 	}

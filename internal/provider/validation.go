@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"fmt"
 	"net"
 	"regexp"
 
@@ -27,7 +28,7 @@ func validateIPAddress() schema.SchemaValidateDiagFunc {
 	return validation.ToDiagFunc(func(v interface{}, k string) (warnings []string, errors []error) {
 		value := v.(string)
 		if ip := net.ParseIP(value); ip == nil {
-			errors = append(errors, validation.InvalidIPAddress(k, value).([]error)...)
+			errors = append(errors, fmt.Errorf("%q is not a valid IP address: %s", k, value))
 		}
 		return warnings, errors
 	})

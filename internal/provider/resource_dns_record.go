@@ -6,7 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	pihole "github.com/ryanwholey/go-pihole"
+	"github.com/poindexter12/terraform-provider-pihole/internal/pihole"
 )
 
 // resourceDNSRecord returns the local DNS Terraform resource management configuration
@@ -48,7 +48,7 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, meta i
 	domain := d.Get("domain").(string)
 	ip := d.Get("ip").(string)
 
-	_, err := client.LocalDNS.Create(ctx, domain, ip)
+	_, err := client.LocalDNS().Create(ctx, domain, ip)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -65,9 +65,9 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, meta int
 		return diags
 	}
 
-	record, err := client.LocalDNS.Get(ctx, d.Id())
+	record, err := client.LocalDNS().Get(ctx, d.Id())
 	if err != nil {
-		if errors.Is(err, pihole.ErrorLocalDNSNotFound) {
+		if errors.Is(err, pihole.ErrDNSNotFound) {
 			d.SetId("")
 			return nil
 		}
@@ -93,7 +93,7 @@ func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, meta i
 		return diags
 	}
 
-	if err := client.LocalDNS.Delete(ctx, d.Id()); err != nil {
+	if err := client.LocalDNS().Delete(ctx, d.Id()); err != nil {
 		return diag.FromErr(err)
 	}
 
