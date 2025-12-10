@@ -40,6 +40,7 @@ func Provider() *schema.Provider {
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
+			"pihole_clients":       dataSourceClients(),
 			"pihole_cname_records": dataSourceCNAMERecords(),
 			"pihole_dns_records":   dataSourceDNSRecords(),
 		},
