@@ -63,8 +63,13 @@ func (s *dnsService) Get(ctx context.Context, domain string) (*pihole.DNSRecord,
 }
 
 // Create adds a new DNS record
-func (s *dnsService) Create(ctx context.Context, domain, ip string) (*pihole.DNSRecord, error) {
+func (s *dnsService) Create(ctx context.Context, domain, ip string, opts *pihole.CreateOptions) (*pihole.DNSRecord, error) {
 	path := fmt.Sprintf("%s/%s", dnsHostsPath, url.PathEscape(ip+" "+domain))
+
+	// Append force parameter if requested
+	if opts != nil && opts.Force {
+		path += "?force=true"
+	}
 
 	resp, err := s.client.put(ctx, path, nil)
 	if err != nil {

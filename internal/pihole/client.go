@@ -19,9 +19,17 @@ type Client interface {
 	Logout(ctx context.Context) error
 }
 
+// CreateOptions contains optional parameters for record creation
+type CreateOptions struct {
+	// Force attempts to force record creation. Note: Pi-hole v6 API currently
+	// does not implement this for DNS/CNAME endpoints, but it's included for
+	// forward compatibility with future Pi-hole versions.
+	Force bool
+}
+
 // LocalDNSService manages local DNS A records (domain -> IP mappings)
 type LocalDNSService interface {
-	Create(ctx context.Context, domain, ip string) (*DNSRecord, error)
+	Create(ctx context.Context, domain, ip string, opts *CreateOptions) (*DNSRecord, error)
 	Get(ctx context.Context, domain string) (*DNSRecord, error)
 	List(ctx context.Context) ([]DNSRecord, error)
 	Delete(ctx context.Context, domain string) error
@@ -29,7 +37,7 @@ type LocalDNSService interface {
 
 // LocalCNAMEService manages CNAME records (domain -> target domain mappings)
 type LocalCNAMEService interface {
-	Create(ctx context.Context, domain, target string) (*CNAMERecord, error)
+	Create(ctx context.Context, domain, target string, opts *CreateOptions) (*CNAMERecord, error)
 	Get(ctx context.Context, domain string) (*CNAMERecord, error)
 	List(ctx context.Context) ([]CNAMERecord, error)
 	Delete(ctx context.Context, domain string) error

@@ -42,6 +42,13 @@ func resourceDNSRecord() *schema.Resource {
 				ForceNew:         true,
 				ValidateDiagFunc: validateIPAddress(),
 			},
+			"force": {
+				Description: "Attempt to force record creation. Note: Pi-hole v6 API currently does not implement this for DNS endpoints, but it is included for forward compatibility with future Pi-hole versions.",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				ForceNew:    true,
+			},
 		},
 	}
 }
@@ -55,11 +62,13 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, meta i
 
 	domain := d.Get("domain").(string)
 	ip := d.Get("ip").(string)
+	force := d.Get("force").(bool)
 
 	dnsMutex.Lock()
 	defer dnsMutex.Unlock()
 
-	_, err := client.LocalDNS().Create(ctx, domain, ip)
+	opts := &pihole.CreateOptions{Force: force}
+	_, err := client.LocalDNS().Create(ctx, domain, ip, opts)
 	if err != nil {
 		return diag.FromErr(err)
 	}

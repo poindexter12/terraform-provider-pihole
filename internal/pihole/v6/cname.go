@@ -63,8 +63,13 @@ func (s *cnameService) Get(ctx context.Context, domain string) (*pihole.CNAMERec
 }
 
 // Create adds a new CNAME record
-func (s *cnameService) Create(ctx context.Context, domain, target string) (*pihole.CNAMERecord, error) {
+func (s *cnameService) Create(ctx context.Context, domain, target string, opts *pihole.CreateOptions) (*pihole.CNAMERecord, error) {
 	path := fmt.Sprintf("%s/%s", cnamePath, url.PathEscape(domain+","+target))
+
+	// Append force parameter if requested
+	if opts != nil && opts.Force {
+		path += "?force=true"
+	}
 
 	resp, err := s.client.put(ctx, path, nil)
 	if err != nil {

@@ -42,6 +42,13 @@ func resourceCNAMERecord() *schema.Resource {
 				ForceNew:         true,
 				ValidateDiagFunc: validateDomain(),
 			},
+			"force": {
+				Description: "Attempt to force record creation. Note: Pi-hole v6 API currently does not implement this for CNAME endpoints, but it is included for forward compatibility with future Pi-hole versions.",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				ForceNew:    true,
+			},
 		},
 	}
 }
@@ -55,11 +62,13 @@ func resourceCNAMERecordCreate(ctx context.Context, d *schema.ResourceData, meta
 
 	domain := d.Get("domain").(string)
 	target := d.Get("target").(string)
+	force := d.Get("force").(bool)
 
 	cnameMutex.Lock()
 	defer cnameMutex.Unlock()
 
-	_, err := client.LocalCNAME().Create(ctx, domain, target)
+	opts := &pihole.CreateOptions{Force: force}
+	_, err := client.LocalCNAME().Create(ctx, domain, target, opts)
 	if err != nil {
 		return diag.FromErr(err)
 	}
