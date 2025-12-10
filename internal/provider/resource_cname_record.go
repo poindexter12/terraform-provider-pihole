@@ -10,6 +10,11 @@ import (
 	pihole "github.com/ryanwholey/go-pihole"
 )
 
+// resourceDeleteMutex serializes CNAME delete operations to work around a race
+// condition in the Pi-hole API. When multiple CNAME records are deleted
+// concurrently (e.g., during terraform destroy), some deletions silently fail,
+// leaving orphaned records. This mutex ensures deletes happen sequentially.
+// See: https://github.com/ryanwholey/terraform-provider-pihole/issues/68
 var resourceDeleteMutex sync.Mutex
 
 // resourceCNAMERecord returns the CNAME Terraform resource management configuration
