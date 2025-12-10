@@ -21,16 +21,18 @@ func resourceDNSRecord() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"domain": {
-				Description: "DNS record domain",
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
+				Description:      "DNS record domain",
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				ValidateDiagFunc: validateDomain(),
 			},
 			"ip": {
-				Description: "IP address to route traffic to from the DNS record domain",
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
+				Description:      "IP address to route traffic to from the DNS record domain",
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				ValidateDiagFunc: validateIPAddress(),
 			},
 		},
 	}

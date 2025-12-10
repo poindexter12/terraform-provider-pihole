@@ -24,16 +24,18 @@ func resourceCNAMERecord() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"domain": {
-				Description: "Domain to create a CNAME record for",
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
+				Description:      "Domain to create a CNAME record for",
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				ValidateDiagFunc: validateDomain(),
 			},
 			"target": {
-				Description: "Value of the CNAME record where traffic will be directed to from the configured domain value",
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
+				Description:      "Value of the CNAME record where traffic will be directed to from the configured domain value",
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				ValidateDiagFunc: validateDomain(),
 			},
 		},
 	}
