@@ -30,7 +30,13 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("PIHOLE_CA_FILE", nil),
-				Description: "CA file to connect to Pi-hole with TLS",
+				Description: "Path to a CA certificate file for TLS verification",
+			},
+			"insecure_skip_verify": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Skip TLS certificate verification. WARNING: This is insecure and should only be used for testing or in trusted networks with self-signed certificates.",
 			},
 		},
 
@@ -57,11 +63,12 @@ func configure(version string, provider *schema.Provider) func(ctx context.Conte
 		externalSessionID := os.Getenv("__PIHOLE_SESSION_ID")
 
 		piholeClient, err := Config{
-			Password:  d.Get("password").(string),
-			URL:       d.Get("url").(string),
-			UserAgent: provider.UserAgent("terraform-provider-pihole", version),
-			CAFile:    d.Get("ca_file").(string),
-			SessionID: externalSessionID,
+			Password:           d.Get("password").(string),
+			URL:                d.Get("url").(string),
+			UserAgent:          provider.UserAgent("terraform-provider-pihole", version),
+			CAFile:             d.Get("ca_file").(string),
+			InsecureSkipVerify: d.Get("insecure_skip_verify").(bool),
+			SessionID:          externalSessionID,
 		}.Client(ctx)
 
 		if err != nil {

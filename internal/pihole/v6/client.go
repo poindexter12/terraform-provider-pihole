@@ -40,7 +40,11 @@ func NewClient(ctx context.Context, cfg pihole.Config) (*Client, error) {
 	httpClient.Logger = nil // Disable debug logging
 	stdClient := httpClient.StandardClient()
 
-	// Configure TLS if CA file provided
+	// Configure TLS settings
+	tlsConfig := &tls.Config{}
+	needsCustomTransport := false
+
+	// Handle custom CA file
 	if cfg.CAFile != "" {
 		ca, err := os.ReadFile(cfg.CAFile)
 		if err != nil {
@@ -52,10 +56,19 @@ func NewClient(ctx context.Context, cfg pihole.Config) (*Client, error) {
 			return nil, fmt.Errorf("failed to parse CA certificates from %q", cfg.CAFile)
 		}
 
+		tlsConfig.RootCAs = rootCAs
+		needsCustomTransport = true
+	}
+
+	// Handle insecure skip verify (for self-signed certs without CA file)
+	if cfg.InsecureSkipVerify {
+		tlsConfig.InsecureSkipVerify = true
+		needsCustomTransport = true
+	}
+
+	if needsCustomTransport {
 		stdClient.Transport = &http.Transport{
-			TLSClientConfig: &tls.Config{
-				RootCAs: rootCAs,
-			},
+			TLSClientConfig: tlsConfig,
 		}
 	}
 

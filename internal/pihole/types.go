@@ -26,6 +26,11 @@ type Config struct {
 	// CAFile is an optional path to a CA certificate for TLS
 	CAFile string
 
+	// InsecureSkipVerify disables TLS certificate verification.
+	// WARNING: This is insecure and should only be used for testing
+	// or in environments where you trust the network.
+	InsecureSkipVerify bool
+
 	// SessionID can be provided to reuse an existing session
 	SessionID string
 }
