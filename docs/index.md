@@ -15,7 +15,8 @@ Use the navigation to the left to read about the available resources.
 
 ### Optional
 
-- `ca_file` (String) CA file to connect to Pi-hole with TLS
+- `ca_file` (String) Path to a CA certificate file for TLS verification
+- `insecure_skip_verify` (Boolean) Skip TLS certificate verification. WARNING: This is insecure and should only be used for testing or in trusted networks with self-signed certificates.
 - `password` (String) The admin password used to login to the admin dashboard.
 - `url` (String) URL where Pi-hole is deployed
 
