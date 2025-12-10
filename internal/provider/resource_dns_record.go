@@ -3,11 +3,19 @@ package provider
 import (
 	"context"
 	"errors"
+	"sync"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/poindexter12/terraform-provider-pihole/internal/pihole"
 )
+
+// dnsMutex serializes DNS create/delete operations to work around a race
+// condition in the Pi-hole API. When multiple DNS records are modified
+// concurrently, some operations silently fail, leaving orphaned or missing records.
+// This mutex ensures DNS mutations happen sequentially.
+// See: https://github.com/ryanwholey/terraform-provider-pihole/issues/68
+var dnsMutex sync.Mutex
 
 // resourceDNSRecord returns the local DNS Terraform resource management configuration
 func resourceDNSRecord() *schema.Resource {
@@ -47,6 +55,9 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, meta i
 
 	domain := d.Get("domain").(string)
 	ip := d.Get("ip").(string)
+
+	dnsMutex.Lock()
+	defer dnsMutex.Unlock()
 
 	_, err := client.LocalDNS().Create(ctx, domain, ip)
 	if err != nil {
@@ -92,6 +103,9 @@ func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, meta i
 	if diags != nil {
 		return diags
 	}
+
+	dnsMutex.Lock()
+	defer dnsMutex.Unlock()
 
 	if err := client.LocalDNS().Delete(ctx, d.Id()); err != nil {
 		return diag.FromErr(err)

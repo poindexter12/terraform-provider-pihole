@@ -64,13 +64,23 @@ Adjust `darwin_arm64` for your platform (see `.goreleaser.yml` for options).
 
 ## Architecture
 
-This is a Terraform provider built with the HashiCorp Plugin SDK v2 (`terraform-plugin-sdk/v2`). It manages Pi-hole DNS and CNAME records through the [go-pihole](https://github.com/ryanwholey/go-pihole) client library.
+This is a Terraform provider built with the HashiCorp Plugin SDK v2 (`terraform-plugin-sdk/v2`). It manages Pi-hole DNS and CNAME records through an internal Pi-hole v6 API client (`internal/pihole/`).
 
 ### Provider Structure
 
 - `main.go` - Entry point, serves the provider plugin
-- `internal/provider/provider.go` - Provider schema and configuration (url, password, ca_file)
-- `internal/provider/config.go` - Pi-hole client initialization with retryable HTTP
+- `internal/provider/provider.go` - Provider schema and configuration (url, password, ca_file, insecure_skip_verify)
+- `internal/provider/config.go` - Pi-hole client initialization
+
+### Internal Pi-hole Client
+
+The `internal/pihole/` package provides a Pi-hole v6 API client:
+- `client.go` - Client interface definition
+- `types.go` - Shared types (Config, DNSRecord, CNAMERecord)
+- `errors.go` - Sentinel errors (ErrDNSNotFound, ErrCNAMENotFound)
+- `v6/client.go` - Pi-hole v6 API client implementation (session auth, HTTP methods)
+- `v6/dns.go` - DNS A record operations (List, Get, Create, Delete)
+- `v6/cname.go` - CNAME record operations (List, Get, Create, Delete)
 
 ### Resources and Data Sources
 
@@ -80,6 +90,16 @@ This is a Terraform provider built with the HashiCorp Plugin SDK v2 (`terraform-
 | Resource | `resource_cname_record.go` | Manages CNAME records (domain -> target) |
 | Data Source | `data_source_dns_records.go` | Lists all DNS records |
 | Data Source | `data_source_cname_records.go` | Lists all CNAME records |
+
+### Known Pi-hole API Limitations
+
+The Pi-hole v6 API has some limitations that affect this provider:
+
+1. **No in-place updates**: DNS and CNAME records cannot be updated in-place. Changing the IP (for DNS) or target (for CNAME) requires delete + create. The schema uses `ForceNew: true` to handle this.
+
+2. **Race conditions on concurrent mutations**: The Pi-hole API can silently fail when multiple records are created/deleted concurrently. Both `resource_dns_record.go` and `resource_cname_record.go` use mutex locks (`dnsMutex`, `cnameMutex`) to serialize operations. See [issue #68](https://github.com/ryanwholey/terraform-provider-pihole/issues/68).
+
+3. **Session limits**: Pi-hole has limited session slots. The provider registers a cleanup goroutine via `schema.StopContext` to logout sessions when Terraform exits.
 
 ### Test Pattern
 

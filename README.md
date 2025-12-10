@@ -5,6 +5,8 @@
 > **Note:** This is a fork of [ryanwholey/terraform-provider-pihole](https://github.com/ryanwholey/terraform-provider-pihole).
 > Credit to [@ryanwholey](https://github.com/ryanwholey) for the original implementation.
 
+> **Pi-hole v6 Support:** This fork has been updated to work with Pi-hole v6's new REST API. It is not compatible with Pi-hole v5.
+
 [Pi-hole](https://pi-hole.net/) is an ad blocking application which acts as a DNS proxy that returns empty responses when DNS requests for known advertisement domains are made from your devices. It has a number of additional capabilities like optional DHCP server capabilities, specific allow/deny profiles for specific clients, and a neat UI with a ton of information regarding your internet traffic.
 
 Pi-hole is an open source project and can be found at https://github.com/pi-hole/pi-hole.
@@ -21,6 +23,10 @@ Configure the provider with credentials, or pass environment variables:
 provider "pihole" {
   url       = "https://pihole.domain.com" # PIHOLE_URL
   password  = var.pihole_password         # PIHOLE_PASSWORD
+
+  # Optional TLS settings
+  # ca_file              = "/path/to/ca.crt"  # PIHOLE_CA_FILE
+  # insecure_skip_verify = false              # Skip TLS verification (not recommended)
 }
 ```
 
