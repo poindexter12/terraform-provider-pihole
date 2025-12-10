@@ -58,7 +58,7 @@ func Provider() *schema.Provider {
 
 // configure configures a Pi-hole client to be used for terraform resource requests
 func configure(version string, provider *schema.Provider) func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	return func(ctx context.Context, d *schema.ResourceData) (client interface{}, diags diag.Diagnostics) {
+	return func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 		// Check if a session ID was passed in externally (for testing or session reuse)
 		externalSessionID := os.Getenv("__PIHOLE_SESSION_ID")
 
@@ -84,7 +84,8 @@ func configure(version string, provider *schema.Provider) func(ctx context.Conte
 			}
 		}
 
-		return piholeClient, diags
+		// Return ProviderMeta which wraps the client and provides coordination
+		return &ProviderMeta{Client: piholeClient}, nil
 	}
 }
 

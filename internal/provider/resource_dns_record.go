@@ -3,19 +3,11 @@ package provider
 import (
 	"context"
 	"errors"
-	"sync"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/poindexter12/terraform-provider-pihole/internal/pihole"
 )
-
-// dnsMutex serializes DNS create/delete operations to work around a race
-// condition in the Pi-hole API. When multiple DNS records are modified
-// concurrently, some operations silently fail, leaving orphaned or missing records.
-// This mutex ensures DNS mutations happen sequentially.
-// See: https://github.com/ryanwholey/terraform-provider-pihole/issues/68
-var dnsMutex sync.Mutex
 
 // resourceDNSRecord returns the local DNS Terraform resource management configuration
 func resourceDNSRecord() *schema.Resource {
@@ -55,7 +47,7 @@ func resourceDNSRecord() *schema.Resource {
 
 // resourceDNSRecordCreate handles the creation a local DNS record via Terraform
 func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) (diags diag.Diagnostics) {
-	client, diags := getClient(meta)
+	pm, diags := getProviderMeta(meta)
 	if diags != nil {
 		return diags
 	}
@@ -64,11 +56,12 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, meta i
 	ip := d.Get("ip").(string)
 	force := d.Get("force").(bool)
 
-	dnsMutex.Lock()
-	defer dnsMutex.Unlock()
+	// Acquire global mutex to serialize all Pi-hole API operations
+	pm.Lock()
+	defer pm.Unlock()
 
 	opts := &pihole.CreateOptions{Force: force}
-	_, err := client.LocalDNS().Create(ctx, domain, ip, opts)
+	_, err := pm.Client.LocalDNS().Create(ctx, domain, ip, opts)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -80,12 +73,16 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, meta i
 
 // resourceDNSRecordRead finds a local DNS record based on the associated domain ID
 func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, meta interface{}) (diags diag.Diagnostics) {
-	client, diags := getClient(meta)
+	pm, diags := getProviderMeta(meta)
 	if diags != nil {
 		return diags
 	}
 
-	record, err := client.LocalDNS().Get(ctx, d.Id())
+	// Read operations also acquire the mutex to prevent reads during writes
+	pm.Lock()
+	defer pm.Unlock()
+
+	record, err := pm.Client.LocalDNS().Get(ctx, d.Id())
 	if err != nil {
 		if errors.Is(err, pihole.ErrDNSNotFound) {
 			d.SetId("")
@@ -108,15 +105,16 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, meta int
 
 // resourceDNSRecordDelete handles the deletion of a local DNS record via Terraform
 func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) (diags diag.Diagnostics) {
-	client, diags := getClient(meta)
+	pm, diags := getProviderMeta(meta)
 	if diags != nil {
 		return diags
 	}
 
-	dnsMutex.Lock()
-	defer dnsMutex.Unlock()
+	// Acquire global mutex to serialize all Pi-hole API operations
+	pm.Lock()
+	defer pm.Unlock()
 
-	if err := client.LocalDNS().Delete(ctx, d.Id()); err != nil {
+	if err := pm.Client.LocalDNS().Delete(ctx, d.Id()); err != nil {
 		return diag.FromErr(err)
 	}
 

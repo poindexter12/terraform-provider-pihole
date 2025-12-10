@@ -48,9 +48,9 @@ func testLocalDNSResourceConfig(name string, domain string, ip string) string {
 
 func testCheckLocalDNSResourceExists(_ *testing.T, domain string, ip string) resource.TestCheckFunc {
 	return func(*terraform.State) error {
-		client := testAccProvider.Meta().(pihole.Client)
+		pm := testAccProvider.Meta().(*ProviderMeta)
 
-		record, err := client.LocalDNS().Get(context.Background(), domain)
+		record, err := pm.Client.LocalDNS().Get(context.Background(), domain)
 		if err != nil {
 			return err
 		}
@@ -64,14 +64,14 @@ func testCheckLocalDNSResourceExists(_ *testing.T, domain string, ip string) res
 }
 
 func testAccCheckLocalDNSDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(pihole.Client)
+	pm := testAccProvider.Meta().(*ProviderMeta)
 
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pihole_dns_record" {
 			continue
 		}
 
-		if _, err := client.LocalDNS().Get(context.Background(), r.Primary.ID); err != nil {
+		if _, err := pm.Client.LocalDNS().Get(context.Background(), r.Primary.ID); err != nil {
 			if !errors.Is(err, pihole.ErrDNSNotFound) {
 				return err
 			}
