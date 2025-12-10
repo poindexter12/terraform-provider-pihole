@@ -10,12 +10,12 @@ import (
 	"github.com/poindexter12/terraform-provider-pihole/internal/pihole"
 )
 
-// resourceDeleteMutex serializes CNAME delete operations to work around a race
-// condition in the Pi-hole API. When multiple CNAME records are deleted
-// concurrently (e.g., during terraform destroy), some deletions silently fail,
-// leaving orphaned records. This mutex ensures deletes happen sequentially.
+// cnameMutex serializes CNAME create/delete operations to work around a race
+// condition in the Pi-hole API. When multiple CNAME records are modified
+// concurrently, some operations silently fail, leaving orphaned or missing records.
+// This mutex ensures CNAME mutations happen sequentially.
 // See: https://github.com/ryanwholey/terraform-provider-pihole/issues/68
-var resourceDeleteMutex sync.Mutex
+var cnameMutex sync.Mutex
 
 // resourceCNAMERecord returns the CNAME Terraform resource management configuration
 func resourceCNAMERecord() *schema.Resource {
@@ -55,6 +55,9 @@ func resourceCNAMERecordCreate(ctx context.Context, d *schema.ResourceData, meta
 
 	domain := d.Get("domain").(string)
 	target := d.Get("target").(string)
+
+	cnameMutex.Lock()
+	defer cnameMutex.Unlock()
 
 	_, err := client.LocalCNAME().Create(ctx, domain, target)
 	if err != nil {
@@ -101,8 +104,8 @@ func resourceCNAMERecordDelete(ctx context.Context, d *schema.ResourceData, meta
 		return diags
 	}
 
-	resourceDeleteMutex.Lock()
-	defer resourceDeleteMutex.Unlock()
+	cnameMutex.Lock()
+	defer cnameMutex.Unlock()
 
 	if err := client.LocalCNAME().Delete(ctx, d.Id()); err != nil {
 		return diag.FromErr(err)
