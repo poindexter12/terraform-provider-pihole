@@ -32,16 +32,6 @@ func (p *ProviderMeta) Unlock() {
 	p.mu.Unlock()
 }
 
-// getClient extracts the Pi-hole client from the provider meta interface.
-// Returns an error diagnostic if the client cannot be loaded.
-func getClient(meta interface{}) (pihole.Client, diag.Diagnostics) {
-	pm, ok := meta.(*ProviderMeta)
-	if !ok {
-		return nil, diag.Errorf("could not load Pi-hole client")
-	}
-	return pm.Client, nil
-}
-
 // getProviderMeta extracts the ProviderMeta from the provider meta interface.
 // Returns an error diagnostic if it cannot be loaded.
 func getProviderMeta(meta interface{}) (*ProviderMeta, diag.Diagnostics) {
