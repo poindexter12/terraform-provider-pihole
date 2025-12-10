@@ -42,7 +42,7 @@ func dataSourceDNSRecords() *schema.Resource {
 func dataSourceDNSRecordsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) (diags diag.Diagnostics) {
 	client, ok := meta.(*pihole.Client)
 	if !ok {
-		return diag.Errorf("Could not load client in resource request")
+		return diag.Errorf("Could not load client in data source request")
 	}
 
 	dnsList, err := client.LocalDNS.List(ctx)

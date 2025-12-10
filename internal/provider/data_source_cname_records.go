@@ -42,7 +42,7 @@ func dataSourceCNAMERecords() *schema.Resource {
 func dataSourceCNAMERecordsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) (diags diag.Diagnostics) {
 	client, ok := meta.(*pihole.Client)
 	if !ok {
-		return diag.Errorf("Could not load client in resource request")
+		return diag.Errorf("Could not load client in data source request")
 	}
 
 	cnameList, err := client.LocalCNAME.List(ctx)
