@@ -13,6 +13,10 @@ type Client interface {
 
 	// SessionID returns the current session ID (for reuse across provider instances)
 	SessionID() string
+
+	// Logout terminates the current session with Pi-hole.
+	// This should be called when the provider is done to free up session slots.
+	Logout(ctx context.Context) error
 }
 
 // LocalDNSService manages local DNS A records (domain -> IP mappings)

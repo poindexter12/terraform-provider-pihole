@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/poindexter12/terraform-provider-pihole/internal/pihole"
 	"github.com/poindexter12/terraform-provider-pihole/internal/version"
 )
 
@@ -52,18 +53,42 @@ func Provider() *schema.Provider {
 // configure configures a Pi-hole client to be used for terraform resource requests
 func configure(version string, provider *schema.Provider) func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	return func(ctx context.Context, d *schema.ResourceData) (client interface{}, diags diag.Diagnostics) {
-		client, err := Config{
+		// Check if a session ID was passed in externally (for testing or session reuse)
+		externalSessionID := os.Getenv("__PIHOLE_SESSION_ID")
+
+		piholeClient, err := Config{
 			Password:  d.Get("password").(string),
 			URL:       d.Get("url").(string),
 			UserAgent: provider.UserAgent("terraform-provider-pihole", version),
 			CAFile:    d.Get("ca_file").(string),
-			SessionID: os.Getenv("__PIHOLE_SESSION_ID"),
+			SessionID: externalSessionID,
 		}.Client(ctx)
 
 		if err != nil {
 			return nil, diag.FromErr(fmt.Errorf("failed to instantiate client: %w", err))
 		}
 
-		return client, diags
+		// Only register cleanup for sessions we created ourselves.
+		// Don't logout sessions passed in via __PIHOLE_SESSION_ID as those
+		// are managed externally (e.g., for testing or session pooling).
+		if externalSessionID == "" {
+			if stopCtx, ok := schema.StopContext(ctx); ok {
+				go cleanupOnStop(stopCtx, piholeClient)
+			}
+		}
+
+		return piholeClient, diags
 	}
+}
+
+// cleanupOnStop waits for the stop context to be cancelled
+// and then logs out the Pi-hole session to free up the session slot.
+func cleanupOnStop(stopCtx context.Context, client pihole.Client) {
+	<-stopCtx.Done()
+
+	// Use a fresh context for logout since stopCtx is cancelled
+	logoutCtx, cancel := context.WithTimeout(context.Background(), 5*1e9) // 5 seconds
+	defer cancel()
+
+	_ = client.Logout(logoutCtx) // Best effort - ignore errors
 }
