@@ -44,7 +44,7 @@ func dataSourceCNAMERecordsRead(ctx context.Context, d *schema.ResourceData, met
 		return diags
 	}
 
-	cnameList, err := client.LocalCNAME.List(ctx)
+	cnameList, err := client.LocalCNAME().List(ctx)
 	if err != nil {
 		return diag.FromErr(err)
 	}

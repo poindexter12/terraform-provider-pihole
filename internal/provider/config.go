@@ -2,14 +2,9 @@ package provider
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
-	"fmt"
-	"net/http"
-	"os"
 
-	retryablehttp "github.com/hashicorp/go-retryablehttp"
-	pihole "github.com/ryanwholey/go-pihole"
+	"github.com/poindexter12/terraform-provider-pihole/internal/pihole"
+	v6 "github.com/poindexter12/terraform-provider-pihole/internal/pihole/v6"
 )
 
 // Config defines the configuration options for the Pi-hole client
@@ -30,38 +25,12 @@ type Config struct {
 	SessionID string
 }
 
-func (c Config) Client(ctx context.Context) (*pihole.Client, error) {
-	httpClient := retryablehttp.NewClient().StandardClient()
-
-	if c.CAFile != "" {
-		ca, err := os.ReadFile(c.CAFile)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read CA file %q: %w", c.CAFile, err)
-		}
-
-		rootCAs := x509.NewCertPool()
-		if !rootCAs.AppendCertsFromPEM(ca) {
-			return nil, fmt.Errorf("failed to parse CA certificates from %q", c.CAFile)
-		}
-
-		transport := &http.Transport{}
-		transport.TLSClientConfig = &tls.Config{
-			RootCAs: rootCAs,
-		}
-
-		httpClient.Transport = transport
-	}
-
-	headers := http.Header{}
-	headers.Add("User-Agent", c.UserAgent)
-
-	config := pihole.Config{
-		BaseURL:    c.URL,
-		Password:   c.Password,
-		Headers:    headers,
-		HttpClient: httpClient,
-		SessionID:  c.SessionID,
-	}
-
-	return pihole.New(config)
+func (c Config) Client(ctx context.Context) (pihole.Client, error) {
+	return v6.NewClient(ctx, pihole.Config{
+		BaseURL:   c.URL,
+		Password:  c.Password,
+		UserAgent: c.UserAgent,
+		CAFile:    c.CAFile,
+		SessionID: c.SessionID,
+	})
 }

@@ -44,7 +44,7 @@ func dataSourceDNSRecordsRead(ctx context.Context, d *schema.ResourceData, meta 
 		return diags
 	}
 
-	dnsList, err := client.LocalDNS.List(ctx)
+	dnsList, err := client.LocalDNS().List(ctx)
 	if err != nil {
 		return diag.FromErr(err)
 	}

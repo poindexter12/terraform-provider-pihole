@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	pihole "github.com/ryanwholey/go-pihole"
+	"github.com/poindexter12/terraform-provider-pihole/internal/pihole"
 )
 
 // resourceDeleteMutex serializes CNAME delete operations to work around a race
@@ -56,7 +56,7 @@ func resourceCNAMERecordCreate(ctx context.Context, d *schema.ResourceData, meta
 	domain := d.Get("domain").(string)
 	target := d.Get("target").(string)
 
-	_, err := client.LocalCNAME.Create(ctx, domain, target)
+	_, err := client.LocalCNAME().Create(ctx, domain, target)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -73,9 +73,9 @@ func resourceCNAMERecordRead(ctx context.Context, d *schema.ResourceData, meta i
 		return diags
 	}
 
-	record, err := client.LocalCNAME.Get(ctx, d.Id())
+	record, err := client.LocalCNAME().Get(ctx, d.Id())
 	if err != nil {
-		if errors.Is(err, pihole.ErrorLocalCNAMENotFound) {
+		if errors.Is(err, pihole.ErrCNAMENotFound) {
 			d.SetId("")
 			return nil
 		}
@@ -104,7 +104,7 @@ func resourceCNAMERecordDelete(ctx context.Context, d *schema.ResourceData, meta
 	resourceDeleteMutex.Lock()
 	defer resourceDeleteMutex.Unlock()
 
-	if err := client.LocalCNAME.Delete(ctx, d.Id()); err != nil {
+	if err := client.LocalCNAME().Delete(ctx, d.Id()); err != nil {
 		return diag.FromErr(err)
 	}
 
