@@ -189,3 +189,37 @@ func (c *Client) put(ctx context.Context, path string, body interface{}) (*http.
 func (c *Client) delete(ctx context.Context, path string) (*http.Response, error) {
 	return c.request(ctx, http.MethodDelete, path, nil)
 }
+
+// Logout terminates the current session with Pi-hole
+func (c *Client) Logout(ctx context.Context) error {
+	c.sessionLock.RLock()
+	sid := c.sessionID
+	c.sessionLock.RUnlock()
+
+	if sid == "" {
+		return nil // No session to logout
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.baseURL+"/api/auth", nil)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set(sessionHeader, sid)
+	if c.userAgent != "" {
+		req.Header.Set("User-Agent", c.userAgent)
+	}
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Clear the session ID
+	c.sessionLock.Lock()
+	c.sessionID = ""
+	c.sessionLock.Unlock()
+
+	return nil
+}
