@@ -54,7 +54,7 @@ func dataSourceCNAMERecordsRead(ctx context.Context, d *schema.ResourceData, met
 	idRef := ""
 
 	for i, r := range cnameList {
-		idRef = fmt.Sprintf("%s%s%s", idRef, r.Domain, r.Target)
+		idRef = fmt.Sprintf("%s|%s|%s|", idRef, r.Domain, r.Target)
 
 		list[i] = map[string]interface{}{
 			"domain": r.Domain,

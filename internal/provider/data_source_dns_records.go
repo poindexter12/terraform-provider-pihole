@@ -54,7 +54,7 @@ func dataSourceDNSRecordsRead(ctx context.Context, d *schema.ResourceData, meta 
 	idRef := ""
 
 	for i, r := range dnsList {
-		idRef = fmt.Sprintf("%s%s%s", idRef, r.Domain, r.IP)
+		idRef = fmt.Sprintf("%s|%s|%s|", idRef, r.Domain, r.IP)
 
 		list[i] = map[string]interface{}{
 			"domain": r.Domain,
