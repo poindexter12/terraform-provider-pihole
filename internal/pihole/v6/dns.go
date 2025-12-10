@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/poindexter12/terraform-provider-pihole/internal/pihole"
 )
@@ -62,7 +64,9 @@ func (s *dnsService) Get(ctx context.Context, domain string) (*pihole.DNSRecord,
 	return nil, pihole.ErrDNSNotFound
 }
 
-// Create adds a new DNS record
+// Create adds a new DNS record.
+// Includes retry logic for transient errors that can occur during
+// ForceNew operations when Pi-hole hasn't fully processed a prior delete.
 func (s *dnsService) Create(ctx context.Context, domain, ip string, opts *pihole.CreateOptions) (*pihole.DNSRecord, error) {
 	path := fmt.Sprintf("%s/%s", dnsHostsPath, url.PathEscape(ip+" "+domain))
 
@@ -71,24 +75,54 @@ func (s *dnsService) Create(ctx context.Context, domain, ip string, opts *pihole
 		path += "?force=true"
 	}
 
-	resp, err := s.client.put(ctx, path, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
+	var lastErr error
+	for attempt := 0; attempt < 3; attempt++ {
+		if attempt > 0 {
+			// Wait before retry - Pi-hole may need time to process the delete
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			case <-time.After(100 * time.Millisecond):
+			}
+		}
 
-	if resp.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("unexpected status code: %d (expected 201)", resp.StatusCode)
+		resp, err := s.client.put(ctx, path, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		if resp.StatusCode == http.StatusCreated {
+			resp.Body.Close()
+			return &pihole.DNSRecord{Domain: domain, IP: ip}, nil
+		}
+
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+
+		// Check if this is a retryable error (duplicate/conflict during ForceNew)
+		bodyStr := string(body)
+		if resp.StatusCode == http.StatusBadRequest && strings.Contains(bodyStr, "already present") {
+			lastErr = fmt.Errorf("item already present (attempt %d/3): %s", attempt+1, bodyStr)
+			continue
+		}
+
+		// Non-retryable error
+		return nil, fmt.Errorf("unexpected status code: %d (expected 201): %s", resp.StatusCode, bodyStr)
 	}
 
-	return &pihole.DNSRecord{Domain: domain, IP: ip}, nil
+	return nil, lastErr
 }
 
-// Delete removes a DNS record
+// Delete removes a DNS record.
+// Returns nil if the record doesn't exist (idempotent delete).
 func (s *dnsService) Delete(ctx context.Context, domain string) error {
 	// First get the record to find its IP
 	record, err := s.Get(ctx, domain)
 	if err != nil {
+		// If record not found, delete is already done
+		if err == pihole.ErrDNSNotFound {
+			return nil
+		}
 		return err
 	}
 
@@ -100,7 +134,8 @@ func (s *dnsService) Delete(ctx context.Context, domain string) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusNoContent {
+	// 204 = deleted, 404 = already gone (both are success)
+	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusNotFound {
 		return fmt.Errorf("unexpected status code: %d (expected 204)", resp.StatusCode)
 	}
 

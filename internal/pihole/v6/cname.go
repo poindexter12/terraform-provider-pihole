@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/poindexter12/terraform-provider-pihole/internal/pihole"
 )
@@ -62,7 +64,9 @@ func (s *cnameService) Get(ctx context.Context, domain string) (*pihole.CNAMERec
 	return nil, pihole.ErrCNAMENotFound
 }
 
-// Create adds a new CNAME record
+// Create adds a new CNAME record.
+// Includes retry logic for "duplicate CNAME" errors that can occur during
+// ForceNew operations when dnsmasq hasn't fully processed a prior delete.
 func (s *cnameService) Create(ctx context.Context, domain, target string, opts *pihole.CreateOptions) (*pihole.CNAMERecord, error) {
 	path := fmt.Sprintf("%s/%s", cnamePath, url.PathEscape(domain+","+target))
 
@@ -71,24 +75,54 @@ func (s *cnameService) Create(ctx context.Context, domain, target string, opts *
 		path += "?force=true"
 	}
 
-	resp, err := s.client.put(ctx, path, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
+	var lastErr error
+	for attempt := 0; attempt < 3; attempt++ {
+		if attempt > 0 {
+			// Wait before retry - dnsmasq may need time to process the delete
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			case <-time.After(100 * time.Millisecond):
+			}
+		}
 
-	if resp.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("unexpected status code: %d (expected 201)", resp.StatusCode)
+		resp, err := s.client.put(ctx, path, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		if resp.StatusCode == http.StatusCreated {
+			resp.Body.Close()
+			return &pihole.CNAMERecord{Domain: domain, Target: target}, nil
+		}
+
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+
+		// Check if this is a retryable "duplicate CNAME" error
+		bodyStr := string(body)
+		if resp.StatusCode == http.StatusBadRequest && strings.Contains(bodyStr, "duplicate CNAME") {
+			lastErr = fmt.Errorf("duplicate CNAME error (attempt %d/3): %s", attempt+1, bodyStr)
+			continue
+		}
+
+		// Non-retryable error
+		return nil, fmt.Errorf("unexpected status code: %d (expected 201): %s", resp.StatusCode, bodyStr)
 	}
 
-	return &pihole.CNAMERecord{Domain: domain, Target: target}, nil
+	return nil, lastErr
 }
 
-// Delete removes a CNAME record
+// Delete removes a CNAME record.
+// Returns nil if the record doesn't exist (idempotent delete).
 func (s *cnameService) Delete(ctx context.Context, domain string) error {
 	// First get the record to find its target
 	record, err := s.Get(ctx, domain)
 	if err != nil {
+		// If record not found, delete is already done
+		if err == pihole.ErrCNAMENotFound {
+			return nil
+		}
 		return err
 	}
 
@@ -100,7 +134,8 @@ func (s *cnameService) Delete(ctx context.Context, domain string) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusNoContent {
+	// 204 = deleted, 404 = already gone (both are success)
+	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusNotFound {
 		return fmt.Errorf("unexpected status code: %d (expected 204)", resp.StatusCode)
 	}
 
