@@ -1,6 +1,8 @@
 # terraform-provider-pihole
 
-![test workflow status](https://github.com/poindexter12/terraform-provider-pihole/actions/workflows/test.yml/badge.svg?branch=main)
+[![Tests](https://github.com/poindexter12/terraform-provider-pihole/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/poindexter12/terraform-provider-pihole/actions/workflows/test.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/poindexter12/terraform-provider-pihole)](https://goreportcard.com/report/github.com/poindexter12/terraform-provider-pihole)
+[![Terraform Registry](https://img.shields.io/badge/terraform-registry-blueviolet)](https://registry.terraform.io/providers/poindexter12/pihole/latest)
 
 > **Note:** This is a fork of [ryanwholey/terraform-provider-pihole](https://github.com/ryanwholey/terraform-provider-pihole).
 > Credit to [@ryanwholey](https://github.com/ryanwholey) for the original implementation.
@@ -13,9 +15,18 @@ Pi-hole is an open source project and can be found at https://github.com/pi-hole
 
 ## Usage
 
-This fork is not published to the Terraform Provider registry. To use it, build from source and install locally (see [Provider Development](#provider-development) below).
+Install the provider from the [Terraform Registry](https://registry.terraform.io/providers/poindexter12/pihole/latest):
 
-For the upstream version published to the registry, see [ryanwholey/pihole](https://registry.terraform.io/providers/ryanwholey/pihole/latest/docs).
+```tf
+terraform {
+  required_providers {
+    pihole = {
+      source  = "poindexter12/pihole"
+      version = "~> 1.0"
+    }
+  }
+}
+```
 
 Configure the provider with credentials, or pass environment variables:
 

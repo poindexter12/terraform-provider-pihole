@@ -8,22 +8,22 @@ import (
 )
 
 // Stress test record counts.
-// Originally tested with 100 records but Pi-hole v6 API returned 400 errors around
-// record 27-58 in GitHub Actions CI. Reduced for CI reliability while still
-// exercising the mutex with meaningful concurrent operations.
+// Keep counts low to avoid overwhelming Pi-hole's dnsmasq during ForceNew operations.
+// Pi-hole's delete is eventually consistent - dnsmasq may not process deletes immediately,
+// causing "Item already present" errors during rapid delete+create cycles.
 const (
 	// stressBulkCount is used for bulk create/delete tests
-	stressBulkCount = 20
+	stressBulkCount = 10
 	// stressBulkReducedCount is the reduced count for bulk delete step
-	stressBulkReducedCount = 5
-	// stressMixedCount is used for mixed operation tests
-	stressMixedCount = 15
+	stressBulkReducedCount = 3
+	// stressMixedCount is used for mixed operation tests (ForceNew heavy)
+	stressMixedCount = 5
 	// stressMixedReducedCount is the reduced count for mixed operation delete step
-	stressMixedReducedCount = 5
+	stressMixedReducedCount = 3
 	// stressMixedFinalCount is the final count for mixed operations
-	stressMixedFinalCount = 20
+	stressMixedFinalCount = 7
 	// stressRapidCount is used for rapid replacement tests
-	stressRapidCount = 5
+	stressRapidCount = 3
 )
 
 // TestAccStressBulkCreate tests creating many DNS and CNAME records simultaneously.

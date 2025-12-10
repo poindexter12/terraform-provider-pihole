@@ -75,14 +75,16 @@ func (s *dnsService) Create(ctx context.Context, domain, ip string, opts *pihole
 		path += "?force=true"
 	}
 
+	const maxRetries = 5
 	var lastErr error
-	for attempt := 0; attempt < 3; attempt++ {
+	for attempt := 0; attempt < maxRetries; attempt++ {
 		if attempt > 0 {
-			// Wait before retry - Pi-hole may need time to process the delete
+			// Exponential backoff: 200ms, 400ms, 800ms, 1600ms
+			delay := time.Duration(200<<uint(attempt-1)) * time.Millisecond
 			select {
 			case <-ctx.Done():
 				return nil, ctx.Err()
-			case <-time.After(100 * time.Millisecond):
+			case <-time.After(delay):
 			}
 		}
 
@@ -102,7 +104,7 @@ func (s *dnsService) Create(ctx context.Context, domain, ip string, opts *pihole
 		// Check if this is a retryable error (duplicate/conflict during ForceNew)
 		bodyStr := string(body)
 		if resp.StatusCode == http.StatusBadRequest && strings.Contains(bodyStr, "already present") {
-			lastErr = fmt.Errorf("item already present (attempt %d/3): %s", attempt+1, bodyStr)
+			lastErr = fmt.Errorf("item already present (attempt %d/%d): %s", attempt+1, maxRetries, bodyStr)
 			continue
 		}
 

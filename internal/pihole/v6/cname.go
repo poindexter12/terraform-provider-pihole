@@ -75,14 +75,16 @@ func (s *cnameService) Create(ctx context.Context, domain, target string, opts *
 		path += "?force=true"
 	}
 
+	const maxRetries = 5
 	var lastErr error
-	for attempt := 0; attempt < 3; attempt++ {
+	for attempt := 0; attempt < maxRetries; attempt++ {
 		if attempt > 0 {
-			// Wait before retry - dnsmasq may need time to process the delete
+			// Exponential backoff: 200ms, 400ms, 800ms, 1600ms
+			delay := time.Duration(200<<uint(attempt-1)) * time.Millisecond
 			select {
 			case <-ctx.Done():
 				return nil, ctx.Err()
-			case <-time.After(100 * time.Millisecond):
+			case <-time.After(delay):
 			}
 		}
 
@@ -99,10 +101,10 @@ func (s *cnameService) Create(ctx context.Context, domain, target string, opts *
 		body, _ := io.ReadAll(resp.Body)
 		resp.Body.Close()
 
-		// Check if this is a retryable "duplicate CNAME" error
+		// Check if this is a retryable error (duplicate/conflict during ForceNew)
 		bodyStr := string(body)
-		if resp.StatusCode == http.StatusBadRequest && strings.Contains(bodyStr, "duplicate CNAME") {
-			lastErr = fmt.Errorf("duplicate CNAME error (attempt %d/3): %s", attempt+1, bodyStr)
+		if resp.StatusCode == http.StatusBadRequest && (strings.Contains(bodyStr, "duplicate CNAME") || strings.Contains(bodyStr, "already present")) {
+			lastErr = fmt.Errorf("item already present (attempt %d/%d): %s", attempt+1, maxRetries, bodyStr)
 			continue
 		}
 
