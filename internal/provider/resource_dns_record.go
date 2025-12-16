@@ -35,7 +35,7 @@ func resourceDNSRecord() *schema.Resource {
 				ValidateDiagFunc: validateIPAddress(),
 			},
 			"force": {
-				Description: "Attempt to force record creation. Note: Pi-hole v6 API currently does not implement this for DNS endpoints, but it is included for forward compatibility with future Pi-hole versions.",
+				Description: "If true and the record already exists, delete it before creating the new record. Enables upsert/overwrite behavior.",
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,

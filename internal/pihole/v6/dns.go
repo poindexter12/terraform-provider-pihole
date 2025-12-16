@@ -65,15 +65,25 @@ func (s *dnsService) Get(ctx context.Context, domain string) (*pihole.DNSRecord,
 }
 
 // Create adds a new DNS record.
+// If opts.Force is true and the record already exists, it will be deleted first.
 // Includes retry logic for transient errors that can occur during
 // ForceNew operations when Pi-hole hasn't fully processed a prior delete.
 func (s *dnsService) Create(ctx context.Context, domain, ip string, opts *pihole.CreateOptions) (*pihole.DNSRecord, error) {
-	path := fmt.Sprintf("%s/%s", dnsHostsPath, url.PathEscape(ip+" "+domain))
-
-	// Append force parameter if requested
+	// If force is requested and record exists, delete it first
 	if opts != nil && opts.Force {
-		path += "?force=true"
+		existing, err := s.Get(ctx, domain)
+		if err == nil && existing != nil {
+			// Record exists - delete it first
+			if delErr := s.Delete(ctx, domain); delErr != nil {
+				return nil, fmt.Errorf("force delete failed: %w", delErr)
+			}
+			// Brief pause to let Pi-hole process the delete
+			time.Sleep(100 * time.Millisecond)
+		}
+		// If err != nil (not found), that's fine - proceed with create
 	}
+
+	path := fmt.Sprintf("%s/%s", dnsHostsPath, url.PathEscape(ip+" "+domain))
 
 	const maxRetries = 5
 	var lastErr error

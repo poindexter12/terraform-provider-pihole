@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/poindexter12/terraform-provider-pihole/internal/pihole"
 	"github.com/poindexter12/terraform-provider-pihole/internal/version"
 )
 
@@ -76,7 +78,28 @@ func configure(version string, provider *schema.Provider) func(ctx context.Conte
 			return nil, diag.FromErr(fmt.Errorf("failed to instantiate client: %w", err))
 		}
 
+		// Only register cleanup for sessions we created ourselves.
+		// Don't logout sessions passed in via __PIHOLE_SESSION_ID as those
+		// are managed externally (e.g., for testing or session pooling).
+		if externalSessionID == "" {
+			if stopCtx, ok := schema.StopContext(ctx); ok {
+				go cleanupOnStop(stopCtx, piholeClient)
+			}
+		}
+
 		// Return ProviderMeta which wraps the client and provides coordination
 		return &ProviderMeta{Client: piholeClient}, nil
 	}
+}
+
+// cleanupOnStop waits for the stop context to be cancelled
+// and then logs out the Pi-hole session to free up the session slot.
+func cleanupOnStop(stopCtx context.Context, client pihole.Client) {
+	<-stopCtx.Done()
+
+	// Use a fresh context for logout since stopCtx is cancelled
+	logoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_ = client.Logout(logoutCtx) // Best effort - ignore errors
 }
