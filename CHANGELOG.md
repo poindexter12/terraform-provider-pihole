@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.1.0](https://github.com/poindexter12/terraform-provider-pihole/releases/tag/v1.1.0) (2025-12-16)
+
+### Bug Fixes
+
+* **Session cleanup restored** - Fixed session logout that was accidentally removed during the ProviderMeta refactor. Sessions are now properly terminated when Terraform exits, preventing "API seats exceeded" (429) errors from stale session accumulation.
+
+* **Force delete-before-create for DNS records** - The `force` attribute now works correctly for DNS records. When `force = true` and a record already exists, the provider deletes it before creating the new one. This fixes "item already present" errors during `ForceNew` operations.
+
+### Notes
+
+* The `force` flag implements client-side delete-before-create because the Pi-hole v6 API doesn't support a force query parameter for DNS endpoints
+* External sessions passed via `__PIHOLE_SESSION_ID` environment variable are not logged out, allowing session reuse across multiple Terraform runs
+
+---
+
 ## [1.0.0](https://github.com/poindexter12/terraform-provider-pihole/releases/tag/v1.0.0) (2025-12-10)
 
 First stable release with Pi-hole v6 support.
