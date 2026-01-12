@@ -82,7 +82,10 @@ func configure(version string, provider *schema.Provider) func(ctx context.Conte
 		// Don't logout sessions passed in via __PIHOLE_SESSION_ID as those
 		// are managed externally (e.g., for testing or session pooling).
 		if externalSessionID == "" {
-			if stopCtx, ok := schema.StopContext(ctx); ok {
+			// StopContext is deprecated but still functional in SDK v2.
+			// The replacement (context-aware CRUD) doesn't provide stop signals.
+			// TODO: Remove when migrating to terraform-plugin-framework.
+			if stopCtx, ok := schema.StopContext(ctx); ok { //nolint:staticcheck
 				go cleanupOnStop(stopCtx, piholeClient)
 			}
 		}

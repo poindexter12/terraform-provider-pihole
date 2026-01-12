@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/poindexter12/terraform-provider-pihole/internal/pihole"
 )
 
@@ -116,13 +117,17 @@ func (s *cnameService) Create(ctx context.Context, domain, target string, opts *
 }
 
 // Delete removes a CNAME record.
-// Returns nil if the record doesn't exist (idempotent delete).
+// Returns nil if the record doesn't exist (idempotent delete, logs warning).
+// Verifies the record is fully deleted before returning to prevent race conditions.
 func (s *cnameService) Delete(ctx context.Context, domain string) error {
 	// First get the record to find its target
 	record, err := s.Get(ctx, domain)
 	if err != nil {
-		// If record not found, delete is already done
+		// If record not found, delete is already done - warn but don't error
 		if err == pihole.ErrCNAMENotFound {
+			tflog.Warn(ctx, "CNAME record does not exist, nothing to delete", map[string]interface{}{
+				"domain": domain,
+			})
 			return nil
 		}
 		return err
@@ -141,7 +146,26 @@ func (s *cnameService) Delete(ctx context.Context, domain string) error {
 		return fmt.Errorf("unexpected status code: %d (expected 204)", resp.StatusCode)
 	}
 
-	return nil
+	// Verify the record is actually gone before returning.
+	// Pi-hole's API can return 204 before the delete is fully processed internally,
+	// causing race conditions when Create() is called immediately after.
+	const maxVerifyAttempts = 10
+	const verifyDelay = 100 * time.Millisecond
+	for attempt := 0; attempt < maxVerifyAttempts; attempt++ {
+		_, err := s.Get(ctx, domain)
+		if err == pihole.ErrCNAMENotFound {
+			// Record is confirmed deleted
+			return nil
+		}
+		// Record still visible, wait and retry
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(verifyDelay):
+		}
+	}
+
+	return fmt.Errorf("delete API succeeded but CNAME record %q still visible after %d verification attempts", domain, maxVerifyAttempts)
 }
 
 // parseCNAMEs converts "domain,target" strings to CNAMERecord structs

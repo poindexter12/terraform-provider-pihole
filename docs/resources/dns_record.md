@@ -29,7 +29,7 @@ resource "pihole_dns_record" "record" {
 
 ### Optional
 
-- `force` (Boolean) Attempt to force record creation. Note: Pi-hole v6 API currently does not implement this for DNS endpoints, but it is included for forward compatibility with future Pi-hole versions.
+- `force` (Boolean) If true and the record already exists, delete it before creating the new record. Enables upsert/overwrite behavior.
 
 ### Read-Only
 
