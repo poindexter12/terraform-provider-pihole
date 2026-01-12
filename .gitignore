@@ -40,3 +40,10 @@ website/vendor
 
 # Keep windows files with windows line endings
 *.winfile eol=crlf
+
+# Beads - ignore runtime files, keep issues.jsonl for sync
+.beads/*.db
+.beads/*.db-*
+.beads/daemon.*
+.beads/bd.sock
+.beads/.local_version
