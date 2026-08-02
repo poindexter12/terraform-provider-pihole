@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/poindexter12/terraform-provider-pihole/internal/pihole"
 	"github.com/poindexter12/terraform-provider-pihole/internal/version"
 )
 
@@ -82,27 +80,23 @@ func configure(version string, provider *schema.Provider) func(ctx context.Conte
 		// Don't logout sessions passed in via __PIHOLE_SESSION_ID as those
 		// are managed externally (e.g., for testing or session pooling).
 		if externalSessionID == "" {
-			// StopContext is deprecated but still functional in SDK v2.
-			// The replacement (context-aware CRUD) doesn't provide stop signals.
+			// Registered sessions are logged out by LogoutAll, which main
+			// calls once plugin.Serve returns. That is the path taken on a
+			// normal Terraform run.
+			sessions.add(piholeClient)
+
+			// StopContext only fires when Terraform interrupts the provider,
+			// so it covers Ctrl-C and nothing else; the normal exit path is
+			// handled by main. It is deprecated but still functional in SDK
+			// v2, and the replacement (context-aware CRUD) provides no stop
+			// signal.
 			// TODO: Remove when migrating to terraform-plugin-framework.
 			if stopCtx, ok := schema.StopContext(ctx); ok { //nolint:staticcheck
-				go cleanupOnStop(stopCtx, piholeClient)
+				go cleanupOnStop(stopCtx)
 			}
 		}
 
 		// Return ProviderMeta which wraps the client and provides coordination
 		return &ProviderMeta{Client: piholeClient}, nil
 	}
-}
-
-// cleanupOnStop waits for the stop context to be cancelled
-// and then logs out the Pi-hole session to free up the session slot.
-func cleanupOnStop(stopCtx context.Context, client pihole.Client) {
-	<-stopCtx.Done()
-
-	// Use a fresh context for logout since stopCtx is cancelled
-	logoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	_ = client.Logout(logoutCtx) // Best effort - ignore errors
 }
