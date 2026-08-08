@@ -1,0 +1,27 @@
+---
+# golangci-lint v2 configuration.
+# Restores the v1-era default exclusions (e.g. errcheck on deferred Close)
+# that v2 no longer applies out of the box.
+version: "2"
+
+linters:
+  settings:
+    staticcheck:
+      checks:
+        - all
+        # golangci-lint v2 defaults:
+        - -ST1000
+        - -ST1003
+        - -ST1016
+        - -ST1020
+        - -ST1021
+        - -ST1022
+        # Keep the explicit interface-compliance assertion in provider_test.go:
+        - -QF1011
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling

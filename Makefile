@@ -1,7 +1,7 @@
 .PHONY: help test testall lint docs docker-run release-snapshot tools
 
 # Tool versions
-GOLANGCI_LINT_VERSION ?= v1.64.0
+GOLANGCI_LINT_VERSION ?= v2.4.0
 
 # Local bin directory for tools
 BIN_DIR := $(CURDIR)/bin
@@ -20,7 +20,7 @@ testall: ## Run all tests including acceptance tests (requires PIHOLE_URL and PI
 
 tools: ## Install development tools locally to ./bin
 	@mkdir -p $(BIN_DIR)
-	GOBIN=$(BIN_DIR) go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
+	GOBIN=$(BIN_DIR) go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 
 lint: $(BIN_DIR)/golangci-lint ## Run linter
 	$(BIN_DIR)/golangci-lint run ./... && echo "✓ Lint passed"
