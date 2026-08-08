@@ -5,11 +5,13 @@ on:
       - 'v*'
 
 permissions:
-  contents: write # Needed by goreleaser to create the GitHub release.
+  contents: read
 
 jobs:
   terraform-provider-release:
     name: 'Terraform Provider Release'
+    permissions:
+      contents: write # Needed by goreleaser to create the GitHub release.
     uses: hashicorp/ghaction-terraform-provider-release/.github/workflows/community.yml@5f388ae147bcc1e1c34822571b2f2de40694c5d6 # v5
     secrets:
       gpg-private-key: '${{ secrets.GPG_PRIVATE_KEY }}'
