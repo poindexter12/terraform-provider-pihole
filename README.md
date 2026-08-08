@@ -125,3 +125,11 @@ To generate the docs run
 ```sh
 make docs
 ```
+
+## Contributors
+
+Thanks to everyone who has contributed via pull requests:
+
+<a href="https://github.com/poindexter12/terraform-provider-pihole/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=poindexter12/terraform-provider-pihole" alt="Contributors" />
+</a>
