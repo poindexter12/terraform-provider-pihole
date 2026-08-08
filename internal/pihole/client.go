@@ -14,6 +14,9 @@ type Client interface {
 	// ClientManagement returns the service for managing Pi-hole clients
 	ClientManagement() ClientManagementService
 
+	// Password returns the service for managing the Pi-hole admin password
+	Password() PasswordService
+
 	// SessionID returns the current session ID (for reuse across provider instances)
 	SessionID() string
 
@@ -44,6 +47,20 @@ type LocalCNAMEService interface {
 	Get(ctx context.Context, domain string) (*CNAMERecord, error)
 	List(ctx context.Context) ([]CNAMERecord, error)
 	Delete(ctx context.Context, domain string) error
+}
+
+// PasswordService manages the Pi-hole admin password.
+type PasswordService interface {
+	// Update sets the admin password. Pi-hole invalidates all sessions
+	// (including the caller's) when the password changes, so implementations
+	// must re-establish the client session before returning. Blocks until the
+	// change is verified against the auth endpoint or ctx expires.
+	Update(ctx context.Context, newPassword string) error
+
+	// GetHash returns the current password hash (webserver.api.pwhash).
+	// The hash is stable for an unchanged password, making it usable for
+	// out-of-band change detection.
+	GetHash(ctx context.Context) (string, error)
 }
 
 // ClientManagementService manages Pi-hole client configurations.

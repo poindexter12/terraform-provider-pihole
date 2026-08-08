@@ -25,6 +25,7 @@ type fakeClient struct {
 func (f *fakeClient) LocalDNS() pihole.LocalDNSService                 { return nil }
 func (f *fakeClient) LocalCNAME() pihole.LocalCNAMEService             { return nil }
 func (f *fakeClient) ClientManagement() pihole.ClientManagementService { return nil }
+func (f *fakeClient) Password() pihole.PasswordService                 { return nil }
 func (f *fakeClient) SessionID() string                                { return "fake-session" }
 
 func (f *fakeClient) Logout(ctx context.Context) error {

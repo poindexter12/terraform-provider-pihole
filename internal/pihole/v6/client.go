@@ -30,9 +30,10 @@ type Client struct {
 	sessionID   string
 	sessionLock sync.RWMutex
 
-	dns        *dnsService
-	cname      *cnameService
-	clientMgmt *clientService
+	dns         *dnsService
+	cname       *cnameService
+	clientMgmt  *clientService
+	passwordSvc *passwordService
 }
 
 // NewClient creates a new Pi-hole v6 API client
@@ -84,6 +85,7 @@ func NewClient(ctx context.Context, cfg pihole.Config) (*Client, error) {
 	c.dns = &dnsService{client: c}
 	c.cname = &cnameService{client: c}
 	c.clientMgmt = &clientService{client: c}
+	c.passwordSvc = &passwordService{client: c}
 
 	// If no session ID provided, authenticate now
 	if c.sessionID == "" {
@@ -110,6 +112,11 @@ func (c *Client) ClientManagement() pihole.ClientManagementService {
 	return c.clientMgmt
 }
 
+// Password returns the admin password management service
+func (c *Client) Password() pihole.PasswordService {
+	return c.passwordSvc
+}
+
 // SessionID returns the current session ID
 func (c *Client) SessionID() string {
 	c.sessionLock.RLock()
@@ -119,7 +126,14 @@ func (c *Client) SessionID() string {
 
 // authenticate obtains a session ID from the Pi-hole API
 func (c *Client) authenticate(ctx context.Context) error {
-	body := map[string]string{"password": c.password}
+	return c.authenticateWith(ctx, c.password)
+}
+
+// authenticateWith obtains a session ID using the given password. On success
+// the client's stored password and session are swapped to the new credentials,
+// so subsequent requests from any resource keep working after a password change.
+func (c *Client) authenticateWith(ctx context.Context, password string) error {
+	body := map[string]string{"password": password}
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
 		return err
@@ -160,9 +174,17 @@ func (c *Client) authenticate(ctx context.Context) error {
 
 	c.sessionLock.Lock()
 	c.sessionID = result.Session.SID
+	c.password = password
 	c.sessionLock.Unlock()
 
 	return nil
+}
+
+// SessionPassword returns the password the client last authenticated with
+func (c *Client) SessionPassword() string {
+	c.sessionLock.RLock()
+	defer c.sessionLock.RUnlock()
+	return c.password
 }
 
 // request performs an authenticated HTTP request
@@ -208,6 +230,11 @@ func (c *Client) post(ctx context.Context, path string, body interface{}) (*http
 // put performs an authenticated PUT request
 func (c *Client) put(ctx context.Context, path string, body interface{}) (*http.Response, error) {
 	return c.request(ctx, http.MethodPut, path, body)
+}
+
+// patch performs an authenticated PATCH request
+func (c *Client) patch(ctx context.Context, path string, body interface{}) (*http.Response, error) {
+	return c.request(ctx, http.MethodPatch, path, body)
 }
 
 // delete performs an authenticated DELETE request

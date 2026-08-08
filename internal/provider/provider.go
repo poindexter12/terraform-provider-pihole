@@ -16,8 +16,9 @@ func Provider() *schema.Provider {
 			"password": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				Sensitive:   true,
 				DefaultFunc: schema.EnvDefaultFunc("PIHOLE_PASSWORD", nil),
-				Description: "The admin password used to login to the admin dashboard.",
+				Description: "The admin password used to login to the admin dashboard. An app password (Settings > Web interface/API > Configure app password) also works and allows rotating the admin password via the pihole_password resource in a single apply.",
 			},
 			"url": {
 				Type:        schema.TypeString,
@@ -49,6 +50,7 @@ func Provider() *schema.Provider {
 			"pihole_client":       resourceClient(),
 			"pihole_cname_record": resourceCNAMERecord(),
 			"pihole_dns_record":   resourceDNSRecord(),
+			"pihole_password":     resourcePassword(),
 		},
 	}
 
