@@ -1,0 +1,15 @@
+# Configuration for osv-scanner (also consumed by the OpenSSF Scorecard
+# Vulnerabilities check). Each ignore documents a finding that cannot be
+# fixed by a dependency update; remove entries as soon as a fix exists.
+
+[[IgnoredVulns]]
+id = "GO-2026-5932"
+reason = """
+golang.org/x/crypto/openpgp is deprecated by design and the advisory has no
+fixed version at any x/crypto release. The package is never imported by this
+module (`go mod why golang.org/x/crypto/openpgp` reports it is not needed;
+govulncheck confirms no reachable call path) — the x/crypto module enters the
+graph transitively via the HashiCorp terraform-plugin-sdk chain and cannot be
+removed. Re-evaluate if the advisory gains a fixed version or the SDK drops
+the dependency.
+"""
