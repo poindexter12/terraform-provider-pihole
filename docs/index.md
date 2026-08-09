@@ -17,7 +17,7 @@ Use the navigation to the left to read about the available resources.
 
 - `ca_file` (String) Path to a CA certificate file for TLS verification
 - `insecure_skip_verify` (Boolean) Skip TLS certificate verification. WARNING: This is insecure and should only be used for testing or in trusted networks with self-signed certificates.
-- `password` (String) The admin password used to login to the admin dashboard.
+- `password` (String, Sensitive) The admin password used to login to the admin dashboard. An app password (Settings > Web interface/API > Configure app password) also works and allows rotating the admin password via the pihole_password resource in a single apply.
 - `url` (String) URL where Pi-hole is deployed
 
 ## Example Usage
