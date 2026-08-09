@@ -70,6 +70,14 @@ func TestAccPasswordRotation(t *testing.T) {
 
 	ctx := context.Background()
 
+	// Every password set in this test kills all sessions, including the
+	// shared __PIHOLE_SESSION_ID the rest of the suite reuses. Refresh it
+	// unconditionally when the test ends — t.Cleanup runs after the deferred
+	// password restore below, so it always sees the restored password. If
+	// this ran only on the success path, a failure here would cascade 401s
+	// into every subsequent test.
+	t.Cleanup(func() { refreshSharedSession(t) })
+
 	client, err := Config{URL: url, Password: original}.Client(ctx)
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
@@ -126,10 +134,6 @@ func TestAccPasswordRotation(t *testing.T) {
 	if err := client.Logout(ctx); err != nil {
 		t.Logf("logout failed: %v", err)
 	}
-
-	// This test rotated the password twice, killing all sessions each time,
-	// including the shared __PIHOLE_SESSION_ID used by the rest of the suite.
-	refreshSharedSession(t)
 }
 
 // testPasswordResourceConfig returns HCL to configure the password resource
