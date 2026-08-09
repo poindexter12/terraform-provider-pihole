@@ -28,8 +28,9 @@ jobs:
       fail-fast: false
 
       matrix:
-        tag: 
-          - "2025.03.0" # Recent FTL v6
+        tag:
+          - "2025.03.0" # Oldest supported FTL v6 baseline
+          - "latest" # Current stable release, tracks new Pi-hole versions automatically
 
     runs-on: ubuntu-latest
     timeout-minutes: 15
