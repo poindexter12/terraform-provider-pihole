@@ -101,11 +101,24 @@ func (s *cnameService) Create(ctx context.Context, domain, target string, opts *
 
 		body, _ := io.ReadAll(resp.Body)
 		resp.Body.Close()
-
-		// Check if this is a retryable error (duplicate/conflict during ForceNew)
 		bodyStr := string(body)
-		if resp.StatusCode == http.StatusBadRequest && (strings.Contains(bodyStr, "duplicate CNAME") || strings.Contains(bodyStr, "already present")) {
-			lastErr = fmt.Errorf("item already present (attempt %d/%d): %s", attempt+1, maxRetries, bodyStr)
+
+		// Pi-hole enforces uniqueness on the full "domain,target" item, so
+		// "already present" can only mean the exact record we want already
+		// exists — the desired state is reached (see issue #38). "duplicate
+		// CNAME" is different: dnsmasq rejects a second CNAME for the same
+		// domain with another target, which can resolve once a pending delete
+		// completes, so it stays retryable.
+		if resp.StatusCode == http.StatusBadRequest && strings.Contains(bodyStr, "already present") {
+			tflog.Warn(ctx, "CNAME record already exists with the desired value, adopting it", map[string]interface{}{
+				"domain": domain,
+				"target": target,
+			})
+			return &pihole.CNAMERecord{Domain: domain, Target: target}, nil
+		}
+
+		if resp.StatusCode == http.StatusBadRequest && strings.Contains(bodyStr, "duplicate CNAME") {
+			lastErr = fmt.Errorf("conflicting CNAME for domain exists (attempt %d/%d): %s", attempt+1, maxRetries, bodyStr)
 			continue
 		}
 

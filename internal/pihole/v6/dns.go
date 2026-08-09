@@ -67,8 +67,9 @@ func (s *dnsService) Get(ctx context.Context, domain string) (*pihole.DNSRecord,
 
 // Create adds a new DNS record.
 // If opts.Force is true and the record already exists, it will be deleted first.
-// Includes retry logic for transient errors that can occur during
-// ForceNew operations when Pi-hole hasn't fully processed a prior delete.
+// An "already present" response is treated as success since Pi-hole enforces
+// uniqueness on the full "IP domain" item — the existing record is exactly
+// the desired one.
 func (s *dnsService) Create(ctx context.Context, domain, ip string, opts *pihole.CreateOptions) (*pihole.DNSRecord, error) {
 	// If force is requested and record exists, delete it first
 	if opts != nil && opts.Force {
@@ -86,44 +87,34 @@ func (s *dnsService) Create(ctx context.Context, domain, ip string, opts *pihole
 
 	path := fmt.Sprintf("%s/%s", dnsHostsPath, url.PathEscape(ip+" "+domain))
 
-	const maxRetries = 5
-	var lastErr error
-	for attempt := 0; attempt < maxRetries; attempt++ {
-		if attempt > 0 {
-			// Exponential backoff: 200ms, 400ms, 800ms, 1600ms
-			delay := time.Duration(200<<uint(attempt-1)) * time.Millisecond
-			select {
-			case <-ctx.Done():
-				return nil, ctx.Err()
-			case <-time.After(delay):
-			}
-		}
-
-		resp, err := s.client.put(ctx, path, nil)
-		if err != nil {
-			return nil, err
-		}
-
-		if resp.StatusCode == http.StatusCreated {
-			resp.Body.Close()
-			return &pihole.DNSRecord{Domain: domain, IP: ip}, nil
-		}
-
-		body, _ := io.ReadAll(resp.Body)
-		resp.Body.Close()
-
-		// Check if this is a retryable error (duplicate/conflict during ForceNew)
-		bodyStr := string(body)
-		if resp.StatusCode == http.StatusBadRequest && strings.Contains(bodyStr, "already present") {
-			lastErr = fmt.Errorf("item already present (attempt %d/%d): %s", attempt+1, maxRetries, bodyStr)
-			continue
-		}
-
-		// Non-retryable error
-		return nil, fmt.Errorf("unexpected status code: %d (expected 201): %s", resp.StatusCode, bodyStr)
+	resp, err := s.client.put(ctx, path, nil)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, lastErr
+	if resp.StatusCode == http.StatusCreated {
+		resp.Body.Close()
+		return &pihole.DNSRecord{Domain: domain, IP: ip}, nil
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+
+	// Pi-hole enforces uniqueness on the full "IP domain" item, so "already
+	// present" can only mean the exact record we want already exists — the
+	// desired state is reached. Treating it as success makes creates converge
+	// instead of flaking when FTL's config write-back resurrects a deleted
+	// record (its dnsmasq-test child processes race under rapid mutations,
+	// losing committed deletes; see issue #38).
+	if resp.StatusCode == http.StatusBadRequest && strings.Contains(string(body), "already present") {
+		tflog.Warn(ctx, "DNS record already exists with the desired value, adopting it", map[string]interface{}{
+			"domain": domain,
+			"ip":     ip,
+		})
+		return &pihole.DNSRecord{Domain: domain, IP: ip}, nil
+	}
+
+	return nil, fmt.Errorf("unexpected status code: %d (expected 201): %s", resp.StatusCode, string(body))
 }
 
 // Delete removes a DNS record.
