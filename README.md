@@ -3,6 +3,8 @@
 [![Tests](https://github.com/poindexter12/terraform-provider-pihole/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/poindexter12/terraform-provider-pihole/actions/workflows/test.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/poindexter12/terraform-provider-pihole)](https://goreportcard.com/report/github.com/poindexter12/terraform-provider-pihole)
 [![Terraform Registry](https://img.shields.io/badge/terraform-registry-blueviolet)](https://registry.terraform.io/providers/poindexter12/pihole/latest)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/14009/badge)](https://www.bestpractices.dev/projects/14009)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/poindexter12/terraform-provider-pihole/badge)](https://scorecard.dev/viewer/?uri=github.com/poindexter12/terraform-provider-pihole)
 
 > **Note:** This is a fork of [ryanwholey/terraform-provider-pihole](https://github.com/ryanwholey/terraform-provider-pihole).
 > Credit to [@ryanwholey](https://github.com/ryanwholey) for the original implementation.
