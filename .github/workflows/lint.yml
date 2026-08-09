@@ -3,17 +3,10 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'examples/**'
-      - 'templates/**'
+  # No paths-ignore: lint is a required status check on main, so it must
+  # report on every PR — path-filtered workflows never run on docs-only PRs,
+  # which would leave the required check pending forever.
   pull_request:
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'examples/**'
-      - 'templates/**'
 
 permissions:
   contents: read

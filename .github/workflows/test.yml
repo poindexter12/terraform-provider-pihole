@@ -5,17 +5,10 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - "**.md"
-      - "docs/**"
-      - "examples/**"
-      - "templates/**"
+  # No paths-ignore: these jobs are required status checks on main, so they
+  # must report on every PR — path-filtered workflows never run on docs-only
+  # PRs, which would leave required checks pending forever.
   pull_request:
-    paths-ignore:
-      - "**.md"
-      - "docs/**"
-      - "examples/**"
-      - "templates/**"
   schedule:
     - cron: "0 12 * * 1" # 12:00 every Monday.
 
