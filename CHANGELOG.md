@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.1](https://github.com/poindexter12/terraform-provider-pihole/releases/tag/v1.2.1) (2026-08-09)
+
+### Bug Fixes
+
+* **Converge instead of failing on "already present"** ([#38](https://github.com/poindexter12/terraform-provider-pihole/issues/38)) - Creating a DNS or CNAME record that already exists with the exact desired value now succeeds (logged at WARN) instead of erroring. Pi-hole enforces uniqueness on the full record, so "already present" always means the desired state is already reached. This resolves intermittent `item already present` failures during ForceNew replacements caused by an unlocked config write-back race in Pi-hole FTL that can silently revert committed deletes (reported upstream as [pi-hole/FTL#3015](https://github.com/pi-hole/FTL/issues/3015); fix validated in [pi-hole/FTL#3020](https://github.com/pi-hole/FTL/pull/3020)). A conflicting CNAME for the same domain with a *different* target still errors.
+
+---
+
 ## [1.2.0](https://github.com/poindexter12/terraform-provider-pihole/releases/tag/v1.2.0) (2026-08-08)
 
 ### Features
