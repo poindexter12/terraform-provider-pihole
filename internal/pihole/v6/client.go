@@ -187,8 +187,31 @@ func (c *Client) SessionPassword() string {
 	return c.password
 }
 
-// request performs an authenticated HTTP request
+// request performs an authenticated HTTP request. If the session has been
+// invalidated (Pi-hole purges all sessions on any password change — on some
+// FTL versions in a delayed second pass — and expires idle sessions after
+// webserver.session.timeout), it re-authenticates once with the stored
+// credential and retries the request.
 func (c *Client) request(ctx context.Context, method, path string, body interface{}) (*http.Response, error) {
+	resp, err := c.doRequest(ctx, method, path, body)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusUnauthorized {
+		return resp, nil
+	}
+	resp.Body.Close()
+
+	if err := c.authenticate(ctx); err != nil {
+		return nil, fmt.Errorf("session expired and re-authentication failed: %w", err)
+	}
+
+	return c.doRequest(ctx, method, path, body)
+}
+
+// doRequest performs a single authenticated HTTP request without retry
+func (c *Client) doRequest(ctx context.Context, method, path string, body interface{}) (*http.Response, error) {
 	var bodyReader io.Reader
 	if body != nil {
 		jsonBody, err := json.Marshal(body)

@@ -34,6 +34,11 @@ type mockPihole struct {
 	// password to reject before accepting it.
 	propagationDelay     int
 	propagationRemaining int
+
+	// delayedPurges simulates older FTL versions that purge sessions again
+	// asynchronously after a password change: each pending purge kills all
+	// sessions right before the next authenticated request is validated.
+	delayedPurges int
 }
 
 func newMockPihole(adminPassword string) *mockPihole {
@@ -147,6 +152,12 @@ func (m *mockPihole) handler() http.Handler {
 func (m *mockPihole) validSession(r *http.Request) bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
+	if m.delayedPurges > 0 {
+		m.delayedPurges--
+		m.sessions = map[string]bool{}
+	}
+
 	return m.sessions[r.Header.Get(sessionHeader)]
 }
 
@@ -264,6 +275,67 @@ func TestPasswordUpdatePreservesAppPasswordAuth(t *testing.T) {
 
 	if _, err := client.Password().GetHash(context.Background()); err != nil {
 		t.Fatalf("GetHash with app password session: %v", err)
+	}
+}
+
+// TestSessionReauthOnExpiry verifies the client transparently recovers when
+// its session is invalidated between requests (idle timeout, or another
+// actor changing the password).
+func TestSessionReauthOnExpiry(t *testing.T) {
+	mock := newMockPihole("initial")
+	client, _ := newTestClient(t, mock, "initial")
+
+	mock.delayedPurges = 1 // next request finds its session dead
+
+	hash, err := client.Password().GetHash(context.Background())
+	if err != nil {
+		t.Fatalf("expected transparent re-authentication, got: %v", err)
+	}
+	if hash != "$MOCK-HASH$v=1" {
+		t.Fatalf("unexpected hash: %q", hash)
+	}
+}
+
+// TestPasswordUpdateSurvivesDelayedPurge simulates older FTL versions where a
+// password change is followed by a second asynchronous session purge: the
+// session obtained by Update's re-authentication dies before the next call.
+func TestPasswordUpdateSurvivesDelayedPurge(t *testing.T) {
+	mock := newMockPihole("initial")
+	client, _ := newTestClient(t, mock, "initial")
+
+	if err := client.Password().Update(context.Background(), "rotated"); err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+
+	mock.delayedPurges = 1 // the async purge lands now
+
+	hash, err := client.Password().GetHash(context.Background())
+	if err != nil {
+		t.Fatalf("expected recovery from delayed purge, got: %v", err)
+	}
+	if hash != "$MOCK-HASH$v=2" {
+		t.Fatalf("unexpected hash: %q", hash)
+	}
+}
+
+// TestSessionReauthFailurePropagates verifies a clear error when the session
+// is dead and the stored credential no longer authenticates.
+func TestSessionReauthFailurePropagates(t *testing.T) {
+	mock := newMockPihole("initial")
+	client, _ := newTestClient(t, mock, "initial")
+
+	// Password changed out-of-band: stored credential is now wrong
+	mock.mu.Lock()
+	mock.adminPassword = "changed-elsewhere"
+	mock.sessions = map[string]bool{}
+	mock.mu.Unlock()
+
+	_, err := client.Password().GetHash(context.Background())
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "re-authentication failed") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 
