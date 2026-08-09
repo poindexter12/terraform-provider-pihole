@@ -22,7 +22,7 @@ terraform {
   required_providers {
     pihole = {
       source  = "poindexter12/pihole"
-      version = "~> 1.1"
+      version = "~> 1.2"
     }
   }
 }

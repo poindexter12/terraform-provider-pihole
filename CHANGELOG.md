@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.2.0](https://github.com/poindexter12/terraform-provider-pihole/releases/tag/v1.2.0) (2026-08-08)
+
+### Features
+
+* **New `pihole_password` resource** ([#25](https://github.com/poindexter12/terraform-provider-pihole/issues/25)) - Manage the Pi-hole admin password through Terraform. Updates in place, verifies propagation by polling the auth endpoint instead of sleeping, and detects out-of-band password changes via the stored `webserver.api.pwhash`. Destroy is deliberately a no-op: clearing the password would disable Pi-hole authentication entirely. To rotate the password in a single apply, authenticate the provider with a Pi-hole app password (see the resource documentation for both rotation patterns).
+
+### Bug Fixes
+
+* **Transparent session recovery** - The client re-authenticates and retries once when a request returns 401. This handles Pi-hole invalidating all sessions on any password change (including the delayed second purge observed on older FTL versions such as 2025.03.0), idle session expiry (`webserver.session.timeout`, 30 minutes by default) during long applies, and stale external session IDs.
+
+### Improvements
+
+* Mark the provider `password` argument as sensitive
+
+### Security
+
+* Patch reachable dependency vulnerabilities: `google.golang.org/grpc` → v1.82.1, `golang.org/x/text` → v0.39.0, `github.com/cloudflare/circl` → v1.6.3; govulncheck reports no reachable vulnerabilities
+* Add CodeQL, OpenSSF Scorecard, govulncheck, and Go native fuzzing to CI; pin all GitHub Actions to commit SHAs with least-privilege workflow permissions
+* Add `SECURITY.md` vulnerability reporting policy and weekly grouped Dependabot updates
+
+### Notes
+
+* Acceptance tests now run against both the oldest supported Pi-hole v6 image (`2025.03.0`) and `latest` on every PR
+* Go toolchain follows `go.mod` (currently 1.25) across all CI workflows; golangci-lint migrated to v2
+
+---
+
 ## [1.1.0](https://github.com/poindexter12/terraform-provider-pihole/releases/tag/v1.1.0) (2025-12-16)
 
 ### Bug Fixes
