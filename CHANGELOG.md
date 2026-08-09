@@ -6,10 +6,13 @@
 
 * **New `pihole_password` resource** ([#25](https://github.com/poindexter12/terraform-provider-pihole/issues/25)) - Manage the Pi-hole admin password through Terraform. Updates in place, verifies propagation by polling the auth endpoint instead of sleeping, and detects out-of-band password changes via the stored `webserver.api.pwhash`. Destroy is deliberately a no-op: clearing the password would disable Pi-hole authentication entirely. To rotate the password in a single apply, authenticate the provider with a Pi-hole app password (see the resource documentation for both rotation patterns).
 
+### Bug Fixes
+
+* **Transparent session recovery** - The client re-authenticates and retries once when a request returns 401. This handles Pi-hole invalidating all sessions on any password change (including the delayed second purge observed on older FTL versions such as 2025.03.0), idle session expiry (`webserver.session.timeout`, 30 minutes by default) during long applies, and stale external session IDs.
+
 ### Improvements
 
 * Mark the provider `password` argument as sensitive
-* The provider client now transparently re-authenticates when the admin password changes mid-apply (Pi-hole invalidates all sessions on any password set)
 
 ### Security
 
