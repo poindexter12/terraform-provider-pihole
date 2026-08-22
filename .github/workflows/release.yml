@@ -18,3 +18,36 @@ jobs:
       gpg-private-key-passphrase: '${{ secrets.PASSPHRASE }}'
     with:
       setup-go-version-file: 'go.mod'
+
+  release-hashes:
+    name: 'Collect release artifact hashes'
+    needs: [terraform-provider-release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
+    steps:
+      - name: Download SHA256SUMS from the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern '*_SHA256SUMS' --output sums.txt
+      - name: Encode hashes as base64 subjects
+        id: hash
+        run: echo "hashes=$(base64 -w0 < sums.txt)" >> "$GITHUB_OUTPUT"
+
+  provenance:
+    name: 'Generate SLSA provenance'
+    needs: [release-hashes]
+    permissions:
+      actions: read # Read the workflow run to record it in the provenance.
+      id-token: write # Sign the provenance via Sigstore OIDC.
+      contents: write # Upload the provenance to the GitHub release.
+    # The SLSA generator must be referenced by tag, not commit SHA: slsa-verifier
+    # rejects provenance produced by a generator pinned to a bare commit. The
+    # Scorecard Pinned-Dependencies check has a built-in exception for this repo.
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
+    with:
+      base64-subjects: ${{ needs.release-hashes.outputs.hashes }}
+      upload-assets: true
