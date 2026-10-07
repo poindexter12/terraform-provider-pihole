@@ -5,6 +5,10 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    # CI-only changes; hidden from the changelog and do not cut a release.
+    commit-message:
+      prefix: "ci"
+      include: "scope"
     groups:
       github-actions:
         update-types:
@@ -15,6 +19,18 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    # fix(deps) makes release-please cut a patch release for shipped
+    # dependency updates, so security fixes reach users without a manual step.
+    commit-message:
+      prefix: "fix"
+      include: "scope"
+    ignore:
+      # grpc 1.84.0 is affected by GO-2026-6443 (fixed in 1.83.2 and the
+      # 1.85 line). govulncheck reports it unreachable, so the required
+      # checks would not stop auto-merge from landing it. Remove once a
+      # patched 1.84.x or 1.85.0 is released.
+      - dependency-name: "google.golang.org/grpc"
+        versions: ["1.84.0"]
     groups:
       go-dependencies:
         update-types:
