@@ -26,9 +26,9 @@ updates:
       include: "scope"
     ignore:
       # grpc 1.84.0 is affected by GO-2026-6443 (fixed in 1.83.2 and the
-      # 1.85 line). govulncheck reports it unreachable, so the required
-      # checks would not stop auto-merge from landing it. Remove once a
-      # patched 1.84.x or 1.85.0 is released.
+      # 1.85 line). govulncheck would fail it, and because gomod updates are
+      # grouped, that would block every other update in the weekly PR.
+      # Remove once a patched 1.84.x or 1.85.0 is released.
       - dependency-name: "google.golang.org/grpc"
         versions: ["1.84.0"]
     groups:
