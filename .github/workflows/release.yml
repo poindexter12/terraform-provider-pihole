@@ -53,3 +53,19 @@ jobs:
     with:
       base64-subjects: ${{ needs.release-hashes.outputs.hashes }}
       upload-assets: true
+      draft-release: true
+
+  # Immutable releases are enabled, so publishing must come last: once
+  # published, no further assets can be attached.
+  publish:
+    name: 'Publish release'
+    needs: [provenance]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Publish the draft release.
+    steps:
+      - name: Publish the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false
