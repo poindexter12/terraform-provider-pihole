@@ -41,13 +41,15 @@ func testAccPreCheck(t *testing.T) {
 	}
 }
 
-var testAccProviders map[string]*schema.Provider
+var testAccProviderFactories map[string]func() (*schema.Provider, error)
 var testAccProvider *schema.Provider
 
 func init() {
 	testAccProvider = Provider()
-	testAccProviders = map[string]*schema.Provider{
-		"pihole": testAccProvider,
+	// Return the shared instance, not a fresh Provider(): check functions read
+	// the configured client from testAccProvider.Meta().
+	testAccProviderFactories = map[string]func() (*schema.Provider, error){
+		"pihole": func() (*schema.Provider, error) { return testAccProvider, nil },
 	}
 }
 

@@ -31,9 +31,9 @@ const (
 func TestAccStressBulkCreate(t *testing.T) {
 	lastIdx := stressBulkCount - 1
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckLocalDNSDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckLocalDNSDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testStressBulkCreateConfig(stressBulkCount),
@@ -58,9 +58,9 @@ func TestAccStressBulkCreate(t *testing.T) {
 func TestAccStressBulkDelete(t *testing.T) {
 	reducedLastIdx := stressBulkReducedCount - 1
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckLocalDNSDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckLocalDNSDestroy,
 		Steps: []resource.TestStep{
 			// First create stressBulkCount records
 			{
@@ -84,9 +84,9 @@ func TestAccStressBulkDelete(t *testing.T) {
 // This triggers delete+create sequences that must be atomic
 func TestAccStressForceNew(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckLocalDNSDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckLocalDNSDestroy,
 		Steps: []resource.TestStep{
 			// Create initial records
 			{
@@ -122,9 +122,9 @@ func TestAccStressMixedOperations(t *testing.T) {
 	reducedLastIdx := stressMixedReducedCount - 1
 	finalLastIdx := stressMixedFinalCount - 1
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckLocalDNSDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckLocalDNSDestroy,
 		Steps: []resource.TestStep{
 			// Step 1: Create stressMixedCount DNS and CNAME records
 			{
@@ -172,9 +172,9 @@ func TestAccStressMixedOperations(t *testing.T) {
 // This exercises the mutex heavily by doing many ForceNew cycles back to back
 func TestAccStressRapidReplace(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckLocalDNSDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckLocalDNSDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testStressRapidConfig("10.0.1"),

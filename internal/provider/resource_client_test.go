@@ -14,9 +14,9 @@ import (
 // TestAccClient acceptance test for the client resource
 func TestAccClient(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckClientDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckClientDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testClientResourceConfig("testclient", "192.168.100.1", "Test client"),
@@ -42,9 +42,9 @@ func TestAccClient(t *testing.T) {
 // TestAccClientEmptyComment tests creating a client with no comment
 func TestAccClientEmptyComment(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckClientDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckClientDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testClientResourceConfigNoComment("emptyclient", "192.168.100.2"),
@@ -61,9 +61,9 @@ func TestAccClientEmptyComment(t *testing.T) {
 // TestAccClientMAC tests creating a client using MAC address
 func TestAccClientMAC(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckClientDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckClientDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testClientResourceConfig("macclient", "AA:BB:CC:DD:EE:FF", "MAC address client"),
@@ -118,9 +118,9 @@ func testCheckClientResourceExists(_ *testing.T, client, comment string) resourc
 func TestAccClientStress(t *testing.T) {
 	const count = 20
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckClientDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckClientDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testClientStressConfig(count),

@@ -14,9 +14,9 @@ import (
 // TestAccCNAMERecord acceptance test for the CNAME record resource
 func TestAccCNAMERecord(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckCNAMERecordDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckCNAMERecordDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testLocalCNAMEResourceConfig("foo", "foo.com", "bar.com"),
