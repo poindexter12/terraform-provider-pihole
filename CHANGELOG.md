@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2](https://github.com/poindexter12/terraform-provider-pihole/compare/v1.2.1...v1.2.2) (2026-10-07)
+
+
+### Bug Fixes
+
+* **deps:** bump grpc to v1.83.2 and x/crypto to v0.56.0 ([#48](https://github.com/poindexter12/terraform-provider-pihole/issues/48)) ([6573c06](https://github.com/poindexter12/terraform-provider-pihole/commit/6573c06327493a8dbdcae564fe6cd954199740d2))
+
 ## [1.2.1](https://github.com/poindexter12/terraform-provider-pihole/releases/tag/v1.2.1) (2026-08-09)
 
 ### Bug Fixes
