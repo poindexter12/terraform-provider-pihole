@@ -3,6 +3,8 @@ on:
   push:
     tags:
       - 'v*'
+  # Dispatched on the release tag by release-please.yml.
+  workflow_dispatch:
 
 permissions:
   contents: read

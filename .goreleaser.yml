@@ -50,6 +50,10 @@ signs:
       - "--detach-sign"
       - "${artifact}"
 release:
+  # release-please creates the release as a draft so the Terraform Registry
+  # does not ingest it before the artifacts are uploaded; goreleaser fills the
+  # draft and publishes it.
+  use_existing_draft: true
   extra_files:
     - glob: 'terraform-registry-manifest.json'
       name_template: '{{ .ProjectName }}_{{ .Version }}_manifest.json'
