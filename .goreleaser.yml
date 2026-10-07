@@ -50,10 +50,13 @@ signs:
       - "--detach-sign"
       - "${artifact}"
 release:
-  # release-please creates the release as a draft so the Terraform Registry
-  # does not ingest it before the artifacts are uploaded; goreleaser fills the
-  # draft and publishes it.
+  # release-please creates the release as a draft; goreleaser fills it and
+  # leaves it a draft. Immutable releases are enabled, so nothing can be
+  # attached after publishing: release.yml publishes only once the SLSA
+  # provenance is uploaded. This also keeps the Terraform Registry from
+  # ingesting a release before its artifacts exist.
   use_existing_draft: true
+  draft: true
   extra_files:
     - glob: 'terraform-registry-manifest.json'
       name_template: '{{ .ProjectName }}_{{ .Version }}_manifest.json'
