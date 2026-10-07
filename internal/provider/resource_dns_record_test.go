@@ -13,9 +13,9 @@ import (
 
 func TestAccLocalDNS(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckLocalDNSDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckLocalDNSDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testLocalDNSResourceConfig("foo", "foo.com", "127.0.0.1"),

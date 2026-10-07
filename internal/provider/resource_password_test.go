@@ -25,9 +25,9 @@ func TestAccPassword(t *testing.T) {
 	t.Cleanup(func() { refreshSharedSession(t) })
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPasswordSurvivesDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckPasswordSurvivesDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testPasswordResourceConfig(password),
