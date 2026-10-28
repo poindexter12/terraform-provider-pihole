@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.2.4](https://github.com/poindexter12/terraform-provider-pihole/compare/v1.2.2...v1.2.4) (2026-10-28)
+
+
+### Bug Fixes
+
+* **deps:** bump Go toolchain to 1.26.9 and x/net to v0.60.0 ([#53](https://github.com/poindexter12/terraform-provider-pihole/issues/53)) ([56bb611](https://github.com/poindexter12/terraform-provider-pihole/commit/56bb611e12d458c4ab88108b010daba28f3b8003))
+
+
+### Continuous Integration
+
+* let release-hashes see the draft release ([#55](https://github.com/poindexter12/terraform-provider-pihole/issues/55)) ([9e8f9f6](https://github.com/poindexter12/terraform-provider-pihole/commit/9e8f9f6ea8bbb2543dadc7d26d87ea42efc98079))
+
+
+### Miscellaneous
+
+* unwind the unreleased 1.2.3 version bump ([#57](https://github.com/poindexter12/terraform-provider-pihole/issues/57)) ([358ab7c](https://github.com/poindexter12/terraform-provider-pihole/commit/358ab7ca9435e372b39c9e621cd6b637fa0a7c9c))
+
 ## [1.2.2](https://github.com/poindexter12/terraform-provider-pihole/compare/v1.2.1...v1.2.2) (2026-10-07)
 
 
